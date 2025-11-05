@@ -22,17 +22,16 @@ const getHandle = (
       currentIndex,
       array,
     ) => {
-      const handle = await previousValue,
-        isLast = currentIndex === array.length - 1;
-      if (handle?.kind === "directory")
+      const handle = await previousValue;
+      if (handle?.kind === "directory" && currentValue)
         try {
-          return isLast
-            ? await handle.getFileHandle(currentValue, { create: false })
-            : await handle.getDirectoryHandle(currentValue, { create });
+          return await handle.getDirectoryHandle(currentValue, { create });
         } catch {
-          if (isLast)
+          if (currentIndex === array.length - 1)
             try {
-              return await handle.getDirectoryHandle(currentValue, { create });
+              return await handle.getFileHandle(currentValue, {
+                create: false,
+              });
             } catch {
               return;
             }
