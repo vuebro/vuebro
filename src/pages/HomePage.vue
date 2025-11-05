@@ -123,7 +123,7 @@ const add = () => {
   /**
    * Performs direct login with a bucket value
    *
-   * @param {string} bucketValue - The bucket value to login with
+   * @param bucketValue - The bucket value to login with
    */
   directLogin = (bucketValue: string) => {
     const name = "main",
@@ -160,8 +160,8 @@ const add = () => {
   /**
    * Gets the PIN for a given S3 account
    *
-   * @param {string} name - The name of the S3 account
-   * @returns {Promise<string | undefined>} The PIN or undefined if not needed
+   * @param name - The name of the S3 account
+   * @returns The PIN or undefined if not needed
    */
   getPin = async (name: string): Promise<string | undefined> =>
     new Promise((resolve, reject) => {
@@ -181,13 +181,13 @@ const add = () => {
   /**
    * Checks if the File System Access API is available in the current browser
    *
-   * @returns {boolean} True if File System Access API is available
+   * @returns True if File System Access API is available
    */
   isFileSystemAccess = () => "showOpenFilePicker" in window,
   /**
    * Locks or unlocks an S3 account with a PIN
    *
-   * @param {string} name - The name of the S3 account to lock/unlock
+   * @param name - The name of the S3 account to lock/unlock
    */
   lock = (name: string) => {
     $q.dialog({
@@ -221,7 +221,7 @@ const add = () => {
   /**
    * Logs into an S3 account with the given bucket value
    *
-   * @param {string} bucketValue - The bucket value to login with
+   * @param bucketValue - The bucket value to login with
    */
   login = async (bucketValue: string) => {
     try {
@@ -235,7 +235,7 @@ const add = () => {
   /**
    * Removes an S3 account from the list
    *
-   * @param {number | string} name - The name of the account to remove
+   * @param name - The name of the account to remove
    */
   remove = (name: number | string) => {
     $q.dialog({
@@ -251,7 +251,7 @@ const add = () => {
 /**
  * Edits an S3 account
  *
- * @param {number | string} name - The name of the S3 account to edit
+ * @param name - The name of the S3 account to edit
  */
 const edit = async (name: number | string) => {
   try {

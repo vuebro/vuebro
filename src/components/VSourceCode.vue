@@ -71,9 +71,9 @@ onMounted(async () => {
           /**
            * Handles the request for code completion
            *
-           * @param {{ body: object }} root0 - The request object
-           * @param {object} root0.body - The request body
-           * @returns {Promise<object>} - The completion response
+           * @param root0 - The request object
+           * @param root0.body - The request body
+           * @returns - The completion response
            */
           requestHandler: ({ body }) => copilot.complete({ body }),
           technologies,
@@ -95,9 +95,9 @@ onMounted(async () => {
         /**
          * Gets the token style metadata for syntax highlighting
          *
-         * @param {string} type - The token type
-         * @param {string[]} modifiers - The token modifiers
-         * @returns {object} - The token style metadata
+         * @param type - The token type
+         * @param modifiers - The token modifiers
+         * @returns - The token style metadata
          */
         t.getTokenStyleMetadata = (type: string, modifiers: string[]) => {
           let foreground = 0;
@@ -133,7 +133,7 @@ defineExpose({
   /**
    * Gets the currently selected text in the editor
    *
-   * @returns {Promise<string | null>} The selected text or null if no selection
+   * @returns The selected text or null if no selection
    */
   getSelection: async () => {
     const selection = editor?.getSelection() ?? null;

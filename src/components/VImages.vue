@@ -75,8 +75,7 @@ const $q = useQuasar(),
 /**
  * Adds a new image at the specified index
  *
- * @param {number} i - The index where to add the new image (-1 to add at the
- *   end)
+ * @param i - The index where to add the new image (-1 to add at the end)
  */
 const add = (i: number) => {
     const alt = "",
@@ -86,7 +85,7 @@ const add = (i: number) => {
   /**
    * Copies the URL of the image at the specified index to clipboard
    *
-   * @param {number} i - The index of the image to copy
+   * @param i - The index of the image to copy
    */
   copy = async (i: number) => {
     if (images.value[i]?.url) {
@@ -97,7 +96,7 @@ const add = (i: number) => {
   /**
    * Moves the image at the specified index to the left
    *
-   * @param {number} i - The index of the image to move left
+   * @param i - The index of the image to move left
    */
   left = (i: number) => {
     if (i) {
@@ -109,7 +108,7 @@ const add = (i: number) => {
   /**
    * Removes the image at the specified index after confirming with the user
    *
-   * @param {number} i - The index of the image to remove
+   * @param i - The index of the image to remove
    */
   remove = (i: number) => {
     $q.dialog({
@@ -124,7 +123,7 @@ const add = (i: number) => {
   /**
    * Moves the image at the specified index to the right
    *
-   * @param {number} i - The index of the image to move right
+   * @param i - The index of the image to move right
    */
   right = (i: number) => {
     if (i < images.value.length - 1) {
@@ -136,7 +135,7 @@ const add = (i: number) => {
   /**
    * Opens the file upload dialog for the image at the specified index
    *
-   * @param {number} i - The index of the image to upload
+   * @param i - The index of the image to upload
    */
   upload = (i: number) => {
     index = i;

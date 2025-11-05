@@ -127,8 +127,8 @@ const clickAI = () => {
         /**
          * Validates whether the provided string is a valid domain name
          *
-         * @param {string} val - The domain name to validate
-         * @returns {boolean} - Whether the domain name is valid
+         * @param val - The domain name to validate
+         * @returns - Whether the domain name is valid
          */
         isValid: (val) =>
           !val ||

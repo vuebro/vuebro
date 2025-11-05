@@ -11,8 +11,7 @@ export default defineConfig(() => ({
     /**
      * Extends the Vite configuration
      *
-     * @param {import("vite").UserConfig} config - The Vite configuration object
-     *   to extend
+     * @param config - The Vite configuration object to extend
      */
     extendViteConf: (config) => {
       config.base = "./";

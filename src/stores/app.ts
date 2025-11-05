@@ -49,17 +49,17 @@ const deleted: Ref<TPage | undefined> = ref(),
       /**
        * Handles the page putting operation
        *
-       * @param {TAppPage} params - The page parameters
-       * @param {string} params.branch - The branch of the page
-       * @param {string} params.description - The description of the page
-       * @param {Array} params.images - The images associated with the page
-       * @param {Promise<editor.ITextModel>} params.jsonld - The JSON-LD model
-       * @param {string[]} params.keywords - Keywords for the page
-       * @param {string | null} params.loc - The location of the page
-       * @param {string} params.path - The path of the page
-       * @param {string} params.title - The title of the page
-       * @param {string} params.to - The destination of the page
-       * @param {string} params.type - The type of the page
+       * @param params - The page parameters
+       * @param params.branch - The branch of the page
+       * @param params.description - The description of the page
+       * @param params.images - The images associated with the page
+       * @param params.jsonld - The JSON-LD model
+       * @param params.keywords - Keywords for the page
+       * @param params.loc - The location of the page
+       * @param params.path - The path of the page
+       * @param params.title - The title of the page
+       * @param params.to - The destination of the page
+       * @param params.type - The type of the page
        */
       putPage = async ({
         branch,
@@ -219,7 +219,7 @@ let descriptor: SFCDescriptor | undefined;
 /**
  * Cleans up resources associated with pages
  *
- * @param {TAppPage[]} value - The array of pages to clean up
+ * @param value - The array of pages to clean up
  */
 const cleaner = (value: TAppPage[]) => {
     value.forEach((page) => {
@@ -237,8 +237,8 @@ const cleaner = (value: TAppPage[]) => {
   /**
    * Parses a string into an HTML document
    *
-   * @param {string} value - The HTML string to parse
-   * @returns {Document} The parsed HTML document
+   * @param value - The HTML string to parse
+   * @returns The parsed HTML document
    */
   getDocument = (value: string) =>
     parser.parseFromString(
@@ -248,12 +248,12 @@ const cleaner = (value: TAppPage[]) => {
   /**
    * Gets or creates a Monaco editor model
    *
-   * @param {string} id - The ID of the model
-   * @param {string} ext - The file extension
-   * @param {string} language - The programming language
-   * @param {string} mime - The MIME type
-   * @param {string} init - The initial content
-   * @returns {Promise<editor.ITextModel>} The Monaco editor model
+   * @param id - The ID of the model
+   * @param ext - The file extension
+   * @param language - The programming language
+   * @param mime - The MIME type
+   * @param init - The initial content
+   * @returns The Monaco editor model
    */
   getModel = async (
     id: string,
@@ -288,7 +288,7 @@ const cleaner = (value: TAppPage[]) => {
     /**
      * Gets the HTML content for a page
      *
-     * @returns {Promise<string>} The HTML content
+     * @returns The HTML content
      */
     async get(this: TAppPage) {
       ({ descriptor } = parse((await this.sfc).getValue()));
@@ -329,7 +329,7 @@ const cleaner = (value: TAppPage[]) => {
     /**
      * Sets the HTML content for a page
      *
-     * @param {string} value - The HTML string to set
+     * @param value - The HTML string to set
      */
     async set(this: TAppPage, value: string) {
       const doc = getDocument(value),
@@ -383,7 +383,7 @@ const cleaner = (value: TAppPage[]) => {
     /**
      * Gets the JSON-LD model for a page
      *
-     * @returns {Promise<editor.ITextModel> | undefined} The JSON-LD model
+     * @returns The JSON-LD model
      */
     get(this: TAppPage) {
       return this.id
@@ -395,7 +395,7 @@ const cleaner = (value: TAppPage[]) => {
     /**
      * Gets the SFC (Single File Component) model for a page
      *
-     * @returns {Promise<editor.ITextModel> | undefined} The SFC model
+     * @returns The SFC model
      */
     get(this: TAppPage) {
       return this.id

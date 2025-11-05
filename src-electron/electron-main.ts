@@ -10,7 +10,7 @@ const currentDir = fileURLToPath(new URL(".", import.meta.url));
 /**
  * Creates the main browser window for the Electron application
  *
- * @returns {Promise<void>} A promise that resolves when the window is created
+ * @returns A promise that resolves when the window is created
  */
 const createWindow = async () => {
   mainWindow = new BrowserWindow({

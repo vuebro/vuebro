@@ -95,8 +95,8 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
 /**
  * Decrypts a string value using AES encryption with the provided pin
  *
- * @param {string} [value] - The encrypted string to decrypt
- * @returns {string | null} - The decrypted string or null if no pin is provided
+ * @param [value] - The encrypted string to decrypt
+ * @returns - The decrypted string or null if no pin is provided
  */
 const decrypt = (value?: string) =>
   pin
@@ -116,7 +116,7 @@ const $q = useQuasar(),
 /**
  * Handles the click event when saving credentials
  *
- * @param {Record<string, null | string>} value - The credential object to save
+ * @param value - The credential object to save
  */
 const click = (value: Record<string, null | string>) => {
     if (Bucket.value)
@@ -141,9 +141,8 @@ const click = (value: Record<string, null | string>) => {
   /**
    * Encrypts an object's values using AES encryption with the provided pin
    *
-   * @param {Record<string, null | string>} obj - The object with values to
-   *   encrypt
-   * @returns {Record<string, null | string>} - The object with encrypted values
+   * @param obj - The object with values to encrypt
+   * @returns - The object with encrypted values
    */
   encrypt = (obj: Record<string, null | string>) =>
     pin
@@ -157,8 +156,8 @@ const click = (value: Record<string, null | string>) => {
   /**
    * Gets regions based on the provided endpoint value
    *
-   * @param {null | string} value - The endpoint value to look up regions for
-   * @returns {string[]} - The list of regions for the given endpoint
+   * @param value - The endpoint value to look up regions for
+   * @returns - The list of regions for the given endpoint
    */
   getRegions = (value: null | string) => regions[(value ?? "") as keyof object];
 

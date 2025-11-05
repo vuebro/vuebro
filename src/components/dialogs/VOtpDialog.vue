@@ -48,7 +48,7 @@ const error = ref(false),
 /**
  * Focuses on the field at the given index
  *
- * @param {number} index - The index of the field to focus on
+ * @param index - The index of the field to focus on
  */
 const focus = (index: number) => {
     if (index >= 0 && index < length.value) selected.value = index;
@@ -56,9 +56,8 @@ const focus = (index: number) => {
   /**
    * Updates the reference to a field element at a specific index
    *
-   * @param {ComponentPublicInstance | Element | null} element - The field
-   *   element to reference
-   * @param {number} index - The index at which to store the reference
+   * @param element - The field element to reference
+   * @param index - The index at which to store the reference
    */
   updateFieldRef = (
     element: ComponentPublicInstance | Element | null,

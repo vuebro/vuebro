@@ -31,8 +31,8 @@ const $q = useQuasar(),
 /**
  * Factory function to handle favicon uploads
  *
- * @param {readonly File[]} files - Array of files to upload
- * @returns {Promise<never>} - Always returns a rejected promise
+ * @param files - Array of files to upload
+ * @returns - Always returns a rejected promise
  */
 const factory = async (files: readonly File[]) => {
   const [file] = files;

@@ -144,7 +144,7 @@ const $q = useQuasar(),
 /**
  * Opens a file dialog to add an image attachment to the specified feed item
  *
- * @param {TFeed["items"][0]} value - The feed item to add an image to
+ * @param value - The feed item to add an image to
  */
 const add = (value: TFeed["items"][0]) => {
     row = value;
@@ -153,7 +153,7 @@ const add = (value: TFeed["items"][0]) => {
   /**
    * Opens a dialog to select an internal link for the given feed item
    *
-   * @param {TFeed["items"][0]} feed - The feed item to add a link to
+   * @param feed - The feed item to add a link to
    */
   clickLink = (feed: TFeed["items"][0]) => {
     $q.dialog({

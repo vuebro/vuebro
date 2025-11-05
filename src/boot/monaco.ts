@@ -19,9 +19,9 @@ window.MonacoEnvironment = {
   /**
    * Returns a new web worker instance based on the given label
    *
-   * @param {string} workerId - The ID of the worker
-   * @param {string} label - The label indicating the type of worker to create
-   * @returns {Worker} - A new web worker instance
+   * @param workerId - The ID of the worker
+   * @param label - The label indicating the type of worker to create
+   * @returns - A new web worker instance
    */
   getWorker: (workerId: string, label: string) => {
     switch (label) {

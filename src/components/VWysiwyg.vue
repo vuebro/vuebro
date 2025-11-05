@@ -87,8 +87,8 @@ let rootElement: () => Element | undefined;
 /**
  * Converts fonts array to an object mapping with underscored keys
  *
- * @param {TFonts} fonts - The array of font names to convert
- * @returns {Record<string, string>} An object mapping with underscored keys
+ * @param fonts - The array of font names to convert
+ * @returns An object mapping with underscored keys
  */
 const getFontsObjectFromArray = (fonts: TFonts) =>
   Object.fromEntries(
@@ -242,7 +242,7 @@ const emit = defineEmits(["update:modelValue"]),
   /**
    * Inserts an image into the editor
    *
-   * @param {File} file - The image file to be inserted
+   * @param file - The image file to be inserted
    */
   insertImage = (file: File) => {
     const message = t(
@@ -269,7 +269,7 @@ const emit = defineEmits(["update:modelValue"]),
   /**
    * Handles context menu events
    *
-   * @param {Event} event - The context menu event
+   * @param event - The context menu event
    */
   onContextmenu = (event: Event) => {
     event.stopPropagation();
@@ -277,8 +277,10 @@ const emit = defineEmits(["update:modelValue"]),
   /**
    * Handles mouseover events to show element info in tooltip
    *
-   * @param {Event} event - The mouseover event containing currentTarget and
-   *   target
+   * @param event - The mouseover event containing currentTarget and target
+   * @param event.currentTarget - The element that the event listener is
+   *   attached to
+   * @param event.target - The element that triggered the event
    */
   onMouseover = ({ currentTarget, target: element }: Event) => {
     if (
@@ -324,7 +326,7 @@ const emit = defineEmits(["update:modelValue"]),
   /**
    * Handles paste events, including drag-and-drop of files
    *
-   * @param {ClipboardEvent | DragEvent} evt - The paste or drag event
+   * @param evt - The paste or drag event
    */
   paste = (evt: ClipboardEvent | DragEvent) => {
     const { files = [] } =

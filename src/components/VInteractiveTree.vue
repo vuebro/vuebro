@@ -150,8 +150,8 @@ const clickAdd = () => {
   /**
    * Checks if a page node has any validation errors
    *
-   * @param {TPage} propNode - The page node to check for errors
-   * @returns {boolean} - Whether the node has any errors
+   * @param propNode - The page node to check for errors
+   * @returns - Whether the node has any errors
    */
   error = (propNode: TPage) =>
     errors
@@ -162,8 +162,8 @@ const clickAdd = () => {
   /**
    * Gets the error message for a page node, if any
    *
-   * @param {TPage} propNode - The page node to check
-   * @returns {string | undefined} - The error message or undefined if no error
+   * @param propNode - The page node to check
+   * @returns - The error message or undefined if no error
    */
   errorMessage = (propNode: TPage) => {
     switch (true) {
@@ -180,7 +180,7 @@ const clickAdd = () => {
   /**
    * Handles intersection observer events to determine visibility
    *
-   * @param {IntersectionObserverEntry} entry - The intersection observer entry
+   * @param entry - The intersection observer entry
    */
   onIntersection = (entry: IntersectionObserverEntry) => {
     if (

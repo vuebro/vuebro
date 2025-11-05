@@ -306,8 +306,8 @@ const $q = useQuasar(),
   /**
    * Copies data to the clipboard
    *
-   * @param {string} data - The data to be copied to clipboard
-   * @returns {Promise<void>} A promise that resolves when the data is copied
+   * @param data - The data to be copied to clipboard
+   * @returns A promise that resolves when the data is copied
    */
   clipboard = async (data: string) => {
     await navigator.clipboard.write([
@@ -320,7 +320,7 @@ const $q = useQuasar(),
   /**
    * Creates and returns a default log object
    *
-   * @returns {TLog} A default log object
+   * @returns A default log object
    */
   defaults = () => {
     const value = {} as TLog;
@@ -337,7 +337,7 @@ const $q = useQuasar(),
     /**
      * Gets the icon value with MDI prefix replaced by MDI- format
      *
-     * @returns {string | undefined} The formatted icon value
+     * @returns The formatted icon value
      */
     get() {
       return the.value?.icon?.replace(/^mdi:/, "mdi-");
@@ -345,7 +345,7 @@ const $q = useQuasar(),
     /**
      * Sets the icon value, converting MDI- format back to MDI: prefix
      *
-     * @param {string | undefined} value - The icon value to set
+     * @param value - The icon value to set
      */
     set(value: string | undefined) {
       if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
@@ -359,7 +359,7 @@ const $q = useQuasar(),
     /**
      * Gets the location value
      *
-     * @returns {string | null} The location value or null if not set
+     * @returns The location value or null if not set
      */
     get() {
       return the.value?.loc ?? null;
@@ -367,7 +367,7 @@ const $q = useQuasar(),
     /**
      * Sets the location value, removing leading and trailing slashes
      *
-     * @param {string | null} value - The location value to set
+     * @param value - The location value to set
      */
     set(value: null | string) {
       if (the.value)
@@ -379,9 +379,9 @@ const $q = useQuasar(),
       /**
        * Highlights code with syntax highlighting
        *
-       * @param {string} code - The code to highlight
-       * @param {string} lang - The language of the code
-       * @returns {string} The highlighted HTML code
+       * @param code - The code to highlight
+       * @param lang - The language of the code
+       * @returns The highlighted HTML code
        */
       highlight: (code, lang) =>
         highlighter.codeToHtml(code, {
@@ -466,10 +466,10 @@ const clickAI = () => {
   /**
    * Handles drawer resize events
    *
-   * @param {object} params - The resize parameters
-   * @param {boolean} params.isFirst - Whether this is the first resize event
-   * @param {object} params.offset - The offset information
-   * @param {number} params.offset.x - The x offset value
+   * @param params - The resize parameters
+   * @param params.isFirst - Whether this is the first resize event
+   * @param params.offset - The offset information
+   * @param params.offset.x - The x offset value
    */
   resizeDrawer = ({
     isFirst,
@@ -489,8 +489,8 @@ const clickAI = () => {
     /**
      * Validates that the page name is unique
      *
-     * @param {string | null} v - The value to validate
-     * @returns {boolean | string} True if valid, error message otherwise
+     * @param v - The value to validate
+     * @returns True if valid, error message otherwise
      */
     (v) =>
       !v ||
@@ -503,8 +503,8 @@ const clickAI = () => {
     /**
      * Validates that the page name doesn't contain prohibited characters
      *
-     * @param {null | string} v - The value to validate
-     * @returns {boolean | string} True if valid, error message otherwise
+     * @param v - The value to validate
+     * @returns True if valid, error message otherwise
      */
     (v: null | string) =>
       !["?", "\\", "#"].some((value) => v?.includes(value)) ||
