@@ -1,13 +1,12 @@
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
 
-import * as fsa from "stores/fsa";
+import * as fsa from "@vuebro/fsa";
 import * as s3 from "stores/s3";
 import { ref, watch } from "vue";
 
-const bucket = ref(""),
-  remote = ref(false);
-
 let fileSystemDirectoryHandle: FileSystemDirectoryHandle | undefined;
+
+const remote = ref(false);
 
 /**
  * Returns the appropriate I/O interface based on whether we're using remote
@@ -16,13 +15,15 @@ let fileSystemDirectoryHandle: FileSystemDirectoryHandle | undefined;
  * @returns The S3 interface if remote, otherwise the window object
  */
 const io: () => typeof s3 | Window = () => (remote.value ? s3 : window);
+
 /**
  * Deletes an object from storage (either S3 or the local file system)
  *
  * @param Key - The key/path of the object to delete
  * @returns A promise that resolves when the object is deleted
  */
-const deleteObject = async (Key: string) => {
+export const bucket = ref(""),
+  deleteObject = async (Key: string) => {
     if (bucket.value)
       if (fileSystemDirectoryHandle)
         await fsa.deleteObject(fileSystemDirectoryHandle, Key);
@@ -126,15 +127,3 @@ watch(bucket, (value) => {
     if (fileSystemDirectoryHandle) fileSystemDirectoryHandle = undefined;
   }
 });
-
-export {
-  bucket,
-  deleteObject,
-  getObjectBlob,
-  getObjectText,
-  headBucket,
-  headObject,
-  putObject,
-  removeEmptyDirectories,
-  setFileSystemDirectoryHandle,
-};
