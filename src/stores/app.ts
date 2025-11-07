@@ -7,6 +7,7 @@ import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
+import { ofetch } from "ofetch";
 import { debounce } from "quasar";
 import { cache, second, writable } from "stores/defaults";
 import {
@@ -23,81 +24,97 @@ import { computed, reactive, ref, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
-type TAppPage = TPage & {
+export type TAppPage = TPage & {
   contenteditable: boolean;
   html: Promise<string> | string;
   jsonld: Promise<editor.ITextModel>;
   sfc: Promise<editor.ITextModel>;
 };
 
-const domain = ref("");
+let descriptor: SFCDescriptor | undefined;
 
-const deleted: Ref<TPage | undefined> = ref(),
-  initJsonLD = `{
+const initJsonLD = `{
     "@context": "https://schema.org"
 }`,
-  manifest = (await (
-    await fetch("runtime/.vite/manifest.json")
-  ).json()) as Record<string, Record<string, string>>,
+  manifest: Record<string, Record<string, string>> = await ofetch(
+    "runtime/.vite/manifest.json",
+  ),
   parser = new DOMParser(),
   prevImages: string[] = [],
-  putPage = (async () => {
-    let body: string;
+  routerLink = "router-link";
 
-    const index = await (await fetch("runtime/index.html")).text(),
-      oldPages: Record<string, null | string | undefined>[] = [],
-      /**
-       * Handles the page putting operation
-       *
-       * @param params - The page parameters
-       * @param params.branch - The branch of the page
-       * @param params.description - The description of the page
-       * @param params.images - The images associated with the page
-       * @param params.jsonld - The JSON-LD model
-       * @param params.keywords - Keywords for the page
-       * @param params.loc - The location of the page
-       * @param params.path - The path of the page
-       * @param params.title - The title of the page
-       * @param params.to - The destination of the page
-       * @param params.type - The type of the page
-       */
-      putPage = async ({
-        branch,
-        description,
-        images,
-        jsonld,
-        keywords,
-        loc,
-        path,
-        title,
-        to,
-        type,
-      }: TAppPage) => {
-        let value;
-        try {
-          value = JSON.stringify(
-            JSON.parse((await jsonld).getValue()),
-            null,
-            1,
-          );
-        } catch {
-          value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
-        }
-        const canonical =
-            domain.value &&
-            `https://${domain.value}${to === "/" ? "" : (to ?? "")}`,
-          htm = body
-            .replace(
-              '<base href="" />',
-              `<base href="${
-                Array(branch.length - 1)
-                  .fill("..")
-                  .join("/") || "./"
-              }" />`,
-            )
-            .replace(
-              "</head>",
-              `  <title>${title ?? ""}</title>
+/* -------------------------------------------------------------------------- */
+/*                              Экспортный раздел                             */
+/* -------------------------------------------------------------------------- */
+
+export const deleted: Ref<TPage | undefined> = ref(),
+  domain = ref(""),
+  rightDrawer = ref(false),
+  selected: Ref<string | undefined> = ref(),
+  staticEntries = Object.values(manifest)
+    .filter(({ isStaticEntry }) => isStaticEntry)
+    .map(({ file, name }) => [name, file]),
+  the = computed(
+    () =>
+      (atlas.value[selected.value ?? ""] ?? pages.value[0]) as
+        | TAppPage
+        | undefined,
+  ),
+  urls = reactive(new Map<string, string>());
+
+const putPage = (async () => {
+  let body: string;
+
+  const index = await ofetch("runtime/index.html"),
+    oldPages: Record<string, null | string | undefined>[] = [],
+    /**
+     * Handles the page putting operation
+     *
+     * @param params - The page parameters
+     * @param params.branch - The branch of the page
+     * @param params.description - The description of the page
+     * @param params.images - The images associated with the page
+     * @param params.jsonld - The JSON-LD model
+     * @param params.keywords - Keywords for the page
+     * @param params.loc - The location of the page
+     * @param params.path - The path of the page
+     * @param params.title - The title of the page
+     * @param params.to - The destination of the page
+     * @param params.type - The type of the page
+     */
+    putPage = async ({
+      branch,
+      description,
+      images,
+      jsonld,
+      keywords,
+      loc,
+      path,
+      title,
+      to,
+      type,
+    }: TAppPage) => {
+      let value;
+      try {
+        value = JSON.stringify(JSON.parse((await jsonld).getValue()), null, 1);
+      } catch {
+        value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
+      }
+      const canonical =
+          domain.value &&
+          `https://${domain.value}${to === "/" ? "" : (to ?? "")}`,
+        htm = body
+          .replace(
+            '<base href="" />',
+            `<base href="${
+              Array(branch.length - 1)
+                .fill("..")
+                .join("/") || "./"
+            }" />`,
+          )
+          .replace(
+            "</head>",
+            `  <title>${title ?? ""}</title>
     ${canonical && `<link rel="canonical" href="${canonical.replaceAll('"', "&quot;")}">`}
     ${[
       [description ?? "", "description"],
@@ -138,83 +155,67 @@ ${value}
     </script>`
     }
   </head>`,
-            );
-        if (loc)
-          putObject(`${loc}/index.html`, htm, "text/html").catch(consola.error);
-        putObject(
-          path ? `${path}/index.html` : "index.html",
-          htm,
-          "text/html",
-        ).catch(consola.error);
-      };
+          );
+      if (loc)
+        putObject(`${loc}/index.html`, htm, "text/html").catch(consola.error);
+      putObject(
+        path ? `${path}/index.html` : "index.html",
+        htm,
+        "text/html",
+      ).catch(consola.error);
+    };
 
-    watch(
-      [pages, importmap, domain],
-      debounce(async (arr) => {
-        const [page, imap] = arr as [TPage[], TImportmap, string],
-          [{ title = "" } = {}] = page,
-          promises: Promise<void>[] = [];
-        oldPages.forEach(({ loc, path }) => {
-          if (loc && !page.find((value) => value.loc === loc))
-            promises.push(deleteObject(`${loc}/index.html`));
-          if (!page.find((value) => value.path === path))
-            promises.push(
-              deleteObject(path ? `${path}/index.html` : "index.html"),
-            );
-        });
-        await Promise.allSettled(promises);
-        await removeEmptyDirectories();
-        body = index
-          .replace(
-            '<base href="" />',
-            `<base href="" />
+  watch(
+    [pages, importmap, domain],
+    debounce(async (arr) => {
+      const [page, imap] = arr as [TPage[], TImportmap, string],
+        [{ title = "" } = {}] = page,
+        promises: Promise<void>[] = [];
+      oldPages.forEach(({ loc, path }) => {
+        if (loc && !page.find((value) => value.loc === loc))
+          promises.push(deleteObject(`${loc}/index.html`));
+        if (!page.find((value) => value.path === path))
+          promises.push(
+            deleteObject(path ? `${path}/index.html` : "index.html"),
+          );
+      });
+      await Promise.allSettled(promises);
+      await removeEmptyDirectories();
+      body = index
+        .replace(
+          '<base href="" />',
+          `<base href="" />
     <script type="importmap">
 ${JSON.stringify(imap, null, 1)}
     </script>
     <link rel="alternate" title="${title}" type="application/feed+json" href="./feed.json" />
     <link rel="alternate" title="${title}" type="application/atom+xml" href="./feed.xml" />
     <link rel="alternate" title="${title}" type="application/rss+xml" href="./feed-rss.xml" />`,
-          )
-          .replace(
-            "</head>",
-            `  ${Object.values(imap.imports)
-              .filter((href) => !href.endsWith("/"))
-              .map(
-                (href) =>
-                  `<link rel="modulepreload" crossorigin href="${href}">`,
-              ).join(`
+        )
+        .replace(
+          "</head>",
+          `  ${Object.values(imap.imports)
+            .filter((href) => !href.endsWith("/"))
+            .map(
+              (href) => `<link rel="modulepreload" crossorigin href="${href}">`,
+            ).join(`
     `)}
   </head>`,
-          );
-        oldPages.length = 0;
-        (page as TAppPage[])
-          .filter(({ path }) => path !== undefined)
-          .forEach((value) => {
-            const { loc, path } = value;
-            oldPages.push({ loc, path });
-            void putPage(value);
-          });
-      }, second),
-      { deep: true },
-    );
+        );
+      oldPages.length = 0;
+      (page as TAppPage[])
+        .filter(({ path }) => path !== undefined)
+        .forEach((value) => {
+          const { loc, path } = value;
+          oldPages.push({ loc, path });
+          void putPage(value);
+        });
+    }, second),
+    { deep: true },
+  );
 
-    return putPage;
-  })(),
-  rightDrawer = ref(false),
-  routerLink = "router-link",
-  selected: Ref<string | undefined> = ref(),
-  staticEntries = Object.values(manifest)
-    .filter(({ isStaticEntry }) => isStaticEntry)
-    .map(({ file, name }) => [name, file]),
-  the = computed(
-    () =>
-      (atlas.value[selected.value ?? ""] ?? pages.value[0]) as
-        | TAppPage
-        | undefined,
-  ),
-  urls = reactive(new Map<string, string>());
-
-let descriptor: SFCDescriptor | undefined;
+  return putPage;
+})();
 
 /**
  * Cleans up resources associated with pages
@@ -283,7 +284,13 @@ const cleaner = (value: TAppPage[]) => {
       if (!value) await initObject();
     }
     return model;
-  },
+  };
+
+/* -------------------------------------------------------------------------- */
+/*                            Вычисляемые параметры                           */
+/* -------------------------------------------------------------------------- */
+
+const contenteditable = { value: false, writable },
   html = {
     /**
      * Gets the HTML content for a page
@@ -404,6 +411,10 @@ const cleaner = (value: TAppPage[]) => {
     },
   };
 
+/* -------------------------------------------------------------------------- */
+/*                                 Смотрители                                 */
+/* -------------------------------------------------------------------------- */
+
 watch(deleted, (value) => {
   if (value) cleaner([value as TAppPage]);
 });
@@ -430,8 +441,6 @@ watch(
 );
 
 watch(pages, (objects) => {
-  const value = false,
-    contenteditable = { value, writable };
   objects.forEach((object) => {
     Object.defineProperties(object, {
       contenteditable,
@@ -654,7 +663,3 @@ watch(
   }, second),
   { deep: true },
 );
-
-export type { TAppPage };
-
-export { deleted, domain, rightDrawer, selected, staticEntries, the, urls };
