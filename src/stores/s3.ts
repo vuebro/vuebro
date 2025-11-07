@@ -18,7 +18,7 @@ import { mergeDefaults } from "stores/defaults";
 
 let s3Client: S3Client | undefined;
 
-const credential = useStorage(
+export const credential = useStorage(
     "s3",
     () => {
       const value = {} as TCredentials;
@@ -29,17 +29,42 @@ const credential = useStorage(
     { mergeDefaults },
   ),
   removeEmptyDirectories = undefined,
-  requestHandler = new FetchHttpHandler();
+  /**
+   * Sets or clears the S3 client instance
+   *
+   * @param [value] - The S3 client instance to set, or undefined to clear
+   */
+  setS3Client = (value?: S3Client) => {
+    s3Client?.destroy();
+    s3Client = value;
+  };
 
 /**
- * Sets or clears the S3 client instance
+ * Gets an object from an S3 bucket
  *
- * @param [value] - The S3 client instance to set, or undefined to clear
+ * @param Bucket - The name of the S3 bucket
+ * @param Key - The key of the object to retrieve
+ * @param [ResponseCacheControl] - Optional cache control header
+ * @returns The response containing the object
  */
-const setS3Client = (value?: S3Client) => {
-  s3Client?.destroy();
-  s3Client = value;
+const getObject = async (
+  Bucket: string,
+  Key: string,
+  ResponseCacheControl?: string,
+) => {
+  if (s3Client)
+    try {
+      const { Body, ContentType } = await s3Client.send(
+        new GetObjectCommand({ Bucket, Key, ResponseCacheControl }),
+      );
+      const headers = new Headers({ "content-type": ContentType ?? "" });
+      return new Response(Body as BodyInit, { headers });
+    } catch {
+      //
+    }
+  return new Response();
 };
+
 /**
  * Deletes an object from an S3 bucket
  *
@@ -47,33 +72,8 @@ const setS3Client = (value?: S3Client) => {
  * @param Key - The key of the object to delete
  * @returns A promise that resolves when the object is deleted
  */
-const deleteObject = async (Bucket: string, Key: string) => {
+export const deleteObject = async (Bucket: string, Key: string) => {
     await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
-  },
-  /**
-   * Gets an object from an S3 bucket
-   *
-   * @param Bucket - The name of the S3 bucket
-   * @param Key - The key of the object to retrieve
-   * @param [ResponseCacheControl] - Optional cache control header
-   * @returns The response containing the object
-   */
-  getObject = async (
-    Bucket: string,
-    Key: string,
-    ResponseCacheControl?: string,
-  ) => {
-    if (s3Client)
-      try {
-        const { Body, ContentType } = await s3Client.send(
-          new GetObjectCommand({ Bucket, Key, ResponseCacheControl }),
-        );
-        const headers = new Headers({ "content-type": ContentType ?? "" });
-        return new Response(Body as BodyInit, { headers });
-      } catch {
-        //
-      }
-    return new Response();
   },
   /**
    * Gets an object as a Blob from an S3 bucket
@@ -131,7 +131,7 @@ const deleteObject = async (Bucket: string, Key: string) => {
       credentials,
       endpoint,
       region,
-      requestHandler,
+      requestHandler: new FetchHttpHandler(),
     } as S3ClientConfig);
     try {
       await s3Client.send(new HeadBucketCommand({ Bucket }));
@@ -178,15 +178,3 @@ const deleteObject = async (Bucket: string, Key: string) => {
       new PutObjectCommand({ Body, Bucket, ContentType, Key }),
     );
   };
-
-export {
-  credential,
-  deleteObject,
-  getObjectBlob,
-  getObjectText,
-  headBucket,
-  headObject,
-  putObject,
-  removeEmptyDirectories,
-  setS3Client,
-};
