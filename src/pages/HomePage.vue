@@ -81,9 +81,7 @@ q-page.column
           .text-overline {{ t("ver") }}.: {{ APP_VERSION }}
 </template>
 <script setup lang="ts">
-import type { TCredentials } from "@vuebro/shared";
-
-import { validateCredentials } from "@vuebro/shared";
+import { credentials as defaultCredentials } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
@@ -102,16 +100,9 @@ const { t } = useI18n();
 
 const $q = useQuasar(),
   APP_VERSION = __APP_VERSION__,
-  credential = useStorage(
-    "s3",
-    () => {
-      const value = {} as TCredentials;
-      validateCredentials?.(value) as boolean;
-      return value;
-    },
-    localStorage,
-    { mergeDefaults },
-  ),
+  credential = useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
   router = useRouter();
 
 /**

@@ -2,7 +2,7 @@ import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import { feed, fonts, importmap, kvNodes, pages, tree } from "@vuebro/shared";
+import { feed, fonts, importmap, kvNodes, nodes, tree } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
@@ -46,9 +46,9 @@ const [index, manifest] = await Promise.all(
     <script type="importmap">
 ${JSON.stringify(importmap, null, 1)}
     </script>
-    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
-    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
-    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
+    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
+    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
+    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
       )
       .replace(
         "</head>",
@@ -114,7 +114,7 @@ export const cleaner = (value: null | TPage | TPage[] | undefined) => {
     .map(({ file, name }) => [name, file]),
   the = computed(
     () =>
-      (kvNodes.value[selected.value ?? ""] ?? pages.value[0]) as
+      (kvNodes.value[selected.value ?? ""] ?? nodes.value[0]) as
         | TAppPage
         | undefined,
   ),
@@ -523,7 +523,7 @@ const clearImages = (
 /* -------------------------------------------------------------------------- */
 
 watch(the, clearImages, { deep });
-watch(pages, defineProperties);
+watch(nodes, defineProperties);
 watch(bucket, init);
 
 watch(domain, (cname) => {
@@ -573,7 +573,7 @@ watch(
 );
 
 watch(
-  [pages, feed, domain],
+  [nodes, feed, domain],
   debounce((arr) => {
     const [page, value, tld] = arr as [TPage[], TFeed, string],
       [{ title } = {}] = page,
@@ -611,7 +611,7 @@ watch(
 );
 
 watch(
-  [pages, domain],
+  [nodes, domain],
   debounce((arr) => {
     const [page, cname] = arr as [TPage[], string];
     if (cname) {
@@ -649,7 +649,7 @@ watch(
 );
 
 watch(
-  [pages, importmap, domain],
+  [nodes, importmap, domain],
   debounce(async ([page]: [TPage[], TImportmap, string]) => {
     const promises: Promise<void>[] = [];
     oldPages.forEach(({ loc, path }) => {

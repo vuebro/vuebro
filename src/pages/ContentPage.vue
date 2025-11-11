@@ -267,7 +267,7 @@ import type { ComponentPublicInstance } from "vue";
 import { createMistral } from "@ai-sdk/mistral";
 import { Icon } from "@iconify/vue";
 import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
-import { importmap, pages, tree, validateLog } from "@vuebro/shared";
+import { log as defaultLog, importmap, nodes, tree } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import {
   extractReasoningMiddleware,
@@ -316,16 +316,6 @@ const $q = useQuasar(),
         "text/plain": new Blob([data], { type: "text/plain" }),
       }),
     ]);
-  },
-  /**
-   * Creates and returns a default log object
-   *
-   * @returns A default log object
-   */
-  defaults = () => {
-    const value = {} as TLog;
-    validateLog?.(value) as boolean;
-    return value;
   },
   drawerTab = ref("seo"),
   filter = ref(""),
@@ -439,7 +429,7 @@ const clickAI = () => {
    * Initializes the log for the current page
    */
   initLog = () => {
-    log = useStorage(id, defaults, localStorage, { mergeDefaults });
+    log = useStorage(id, defaultLog, localStorage, { mergeDefaults });
     watch(
       () => [...(log?.value.messages ?? [])],
       async (value, oldValue) => {
@@ -494,7 +484,7 @@ const clickAI = () => {
      */
     (v) =>
       !v ||
-      !pages.value.find(
+      !nodes.value.find(
         (element) =>
           element.path === v ||
           (element.id !== the.value?.id && element.loc === v),

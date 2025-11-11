@@ -62,7 +62,7 @@ import {
   down,
   kvNodes,
   left,
-  pages,
+  nodes,
   remove,
   right,
   tree,
@@ -79,7 +79,7 @@ const $q = useQuasar(),
   errors = [
     (propNode: TPage) => !propNode.name,
     (propNode: TPage) =>
-      !!pages.value.find(
+      !!nodes.value.find(
         (element) =>
           propNode.path &&
           ((element.id !== propNode.id && element.path === propNode.path) ||
@@ -93,7 +93,7 @@ const $q = useQuasar(),
   qtree = ref<QTree>(),
   state = ref(false),
   the = computed(() =>
-    pages.value.length
+    nodes.value.length
       ? (kvNodes.value[selected.value ?? ""] ?? null)
       : undefined,
   ),
@@ -194,7 +194,7 @@ watch(
   (newVal, oldVal) => {
     visible.value = true;
     if (!newVal) {
-      const [{ id } = {}] = pages.value;
+      const [{ id } = {}] = nodes.value;
       selected.value = id;
     }
     if (oldVal) Reflect.defineProperty(oldVal, "contenteditable", { value });
