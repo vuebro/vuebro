@@ -59,8 +59,8 @@ import type { QTree } from "quasar";
 import {
   add,
   addChild,
-  atlas,
   down,
+  kvNodes,
   left,
   pages,
   remove,
@@ -94,7 +94,7 @@ const $q = useQuasar(),
   state = ref(false),
   the = computed(() =>
     pages.value.length
-      ? (atlas.value[selected.value ?? ""] ?? null)
+      ? (kvNodes.value[selected.value ?? ""] ?? null)
       : undefined,
   ),
   title = t("Confirm"),

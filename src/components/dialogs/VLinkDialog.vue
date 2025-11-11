@@ -30,7 +30,7 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { atlas, tree } from "@vuebro/shared";
+import { kvNodes, tree } from "@vuebro/shared";
 import { useDialogPluginComponent } from "quasar";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -44,7 +44,7 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
   { t } = useI18n();
 
 const selected = ref<string | undefined>(),
-  the = computed(() => atlas.value[selected.value ?? ""]);
+  the = computed(() => kvNodes.value[selected.value ?? ""]);
 
 defineEmits([...useDialogPluginComponent.emits]);
 

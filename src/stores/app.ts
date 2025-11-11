@@ -2,7 +2,7 @@ import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import { atlas, feed, fonts, importmap, pages, tree } from "@vuebro/shared";
+import { feed, fonts, importmap, kvNodes, pages, tree } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
@@ -114,7 +114,7 @@ export const cleaner = (value: null | TPage | TPage[] | undefined) => {
     .map(({ file, name }) => [name, file]),
   the = computed(
     () =>
-      (atlas.value[selected.value ?? ""] ?? pages.value[0]) as
+      (kvNodes.value[selected.value ?? ""] ?? pages.value[0]) as
         | TAppPage
         | undefined,
   ),
@@ -248,8 +248,8 @@ const getModel = async (
       putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
         consola.error,
       );
-      if (language === "json" && atlas.value[id])
-        void putPage(atlas.value[id] as TAppPage);
+      if (language === "json" && kvNodes.value[id])
+        void putPage(kvNodes.value[id] as TAppPage);
     }
   };
   if (!model) {
