@@ -9,7 +9,7 @@ import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { ofetch } from "ofetch";
 import { debounce } from "quasar";
-import { cache, second, writable } from "stores/defaults";
+import { cache, deep, second, writable } from "stores/defaults";
 import {
   bucket,
   deleteObject,
@@ -33,13 +33,50 @@ export type TAppPage = TPage & {
 
 let descriptor: SFCDescriptor | undefined;
 
-const initJsonLD = `{
+const [index, manifest] = await Promise.all(
+    ["index.html", ".vite/manifest.json"].map((value) =>
+      ofetch(`runtime/${value}`),
+    ),
+  ),
+  body = computed(() =>
+    index
+      .replace(
+        '<base href="" />',
+        `<base href="" />
+    <script type="importmap">
+${JSON.stringify(importmap, null, 1)}
+    </script>
+    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
+    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
+    <link rel="alternate" title="${pages.value[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
+      )
+      .replace(
+        "</head>",
+        `  ${Object.values(importmap.imports)
+          .filter((href) => !href.endsWith("/"))
+          .map(
+            (href) => `<link rel="modulepreload" crossorigin href="${href}">`,
+          ).join(`
+    `)}
+  </head>`,
+      ),
+  ),
+  domParser = new DOMParser(),
+  /**
+   * Parses a string into an HTML document
+   *
+   * @param value - The HTML string to parse
+   * @returns The parsed HTML document
+   */
+  getDocument = (value: string) =>
+    domParser.parseFromString(
+      `<head><base href="//"></head><body>${value}</body>`,
+      "text/html",
+    ),
+  initJsonLD = `{
     "@context": "https://schema.org"
 }`,
-  manifest: Record<string, Record<string, string>> = await ofetch(
-    "runtime/.vite/manifest.json",
-  ),
-  parser = new DOMParser(),
+  oldPages: Record<string, null | string | undefined>[] = [],
   prevImages: string[] = [],
   routerLink = "router-link";
 
@@ -47,11 +84,32 @@ const initJsonLD = `{
 /*                              Экспортный раздел                             */
 /* -------------------------------------------------------------------------- */
 
-export const deleted: Ref<TPage | undefined> = ref(),
+/**
+ * Cleans up resources associated with pages
+ *
+ * @param value - The array of pages to clean up
+ */
+export const cleaner = (value: null | TPage | TPage[] | undefined) => {
+    if (value)
+      (Array.isArray(value) ? value : [value]).forEach(
+        ({ children, id, images }) => {
+          cleaner(children);
+          images.forEach(({ url }) => {
+            void deleteObject(url);
+          });
+          if (id) {
+            void deleteObject(`pages/${id}.vue`);
+            void deleteObject(`pages/${id}.jsonld`);
+          }
+        },
+      );
+  },
   domain = ref(""),
   rightDrawer = ref(false),
   selected: Ref<string | undefined> = ref(),
-  staticEntries = Object.values(manifest)
+  staticEntries = Object.values(
+    manifest as Record<string, Record<string, string>>,
+  )
     .filter(({ isStaticEntry }) => isStaticEntry)
     .map(({ file, name }) => [name, file]),
   the = computed(
@@ -62,59 +120,57 @@ export const deleted: Ref<TPage | undefined> = ref(),
   ),
   urls = reactive(new Map<string, string>());
 
-const putPage = (async () => {
-  let body: string;
+/* -------------------------------------------------------------------------- */
+/*                                 Функционал                                 */
+/* -------------------------------------------------------------------------- */
 
-  const index = await ofetch("runtime/index.html"),
-    oldPages: Record<string, null | string | undefined>[] = [],
-    /**
-     * Handles the page putting operation
-     *
-     * @param params - The page parameters
-     * @param params.branch - The branch of the page
-     * @param params.description - The description of the page
-     * @param params.images - The images associated with the page
-     * @param params.jsonld - The JSON-LD model
-     * @param params.keywords - Keywords for the page
-     * @param params.loc - The location of the page
-     * @param params.path - The path of the page
-     * @param params.title - The title of the page
-     * @param params.to - The destination of the page
-     * @param params.type - The type of the page
-     */
-    putPage = async ({
-      branch,
-      description,
-      images,
-      jsonld,
-      keywords,
-      loc,
-      path,
-      title,
-      to,
-      type,
-    }: TAppPage) => {
-      let value;
-      try {
-        value = JSON.stringify(JSON.parse((await jsonld).getValue()), null, 1);
-      } catch {
-        value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
-      }
-      const canonical =
-          domain.value &&
-          `https://${domain.value}${to === "/" ? "" : (to ?? "")}`,
-        htm = body
-          .replace(
-            '<base href="" />',
-            `<base href="${
-              Array(branch.length - 1)
-                .fill("..")
-                .join("/") || "./"
-            }" />`,
-          )
-          .replace(
-            "</head>",
-            `  <title>${title ?? ""}</title>
+/**
+ * Handles the page putting operation
+ *
+ * @param params - The page parameters
+ * @param params.branch - The branch of the page
+ * @param params.description - The description of the page
+ * @param params.images - The images associated with the page
+ * @param params.jsonld - The JSON-LD model
+ * @param params.keywords - Keywords for the page
+ * @param params.loc - The location of the page
+ * @param params.path - The path of the page
+ * @param params.title - The title of the page
+ * @param params.to - The destination of the page
+ * @param params.type - The type of the page
+ */
+const putPage = async ({
+  branch,
+  description,
+  images,
+  jsonld,
+  keywords,
+  loc,
+  path,
+  title,
+  to,
+  type,
+}: TAppPage) => {
+  let value;
+  try {
+    value = JSON.stringify(JSON.parse((await jsonld).getValue()), null, 1);
+  } catch {
+    value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
+  }
+  const canonical =
+      domain.value && `https://${domain.value}${to === "/" ? "" : (to ?? "")}`,
+    htm = body.value
+      .replace(
+        '<base href="" />',
+        `<base href="${
+          Array(branch.length - 1)
+            .fill("..")
+            .join("/") || "./"
+        }" />`,
+      )
+      .replace(
+        "</head>",
+        `  <title>${title ?? ""}</title>
     ${canonical && `<link rel="canonical" href="${canonical.replaceAll('"', "&quot;")}">`}
     ${[
       [description ?? "", "description"],
@@ -155,136 +211,55 @@ ${value}
     </script>`
     }
   </head>`,
-          );
-      if (loc)
-        putObject(`${loc}/index.html`, htm, "text/html").catch(consola.error);
-      putObject(
-        path ? `${path}/index.html` : "index.html",
-        htm,
-        "text/html",
-      ).catch(consola.error);
-    };
+      );
 
-  watch(
-    [pages, importmap, domain],
-    debounce(async (arr) => {
-      const [page, imap] = arr as [TPage[], TImportmap, string],
-        [{ title = "" } = {}] = page,
-        promises: Promise<void>[] = [];
-      oldPages.forEach(({ loc, path }) => {
-        if (loc && !page.find((value) => value.loc === loc))
-          promises.push(deleteObject(`${loc}/index.html`));
-        if (!page.find((value) => value.path === path))
-          promises.push(
-            deleteObject(path ? `${path}/index.html` : "index.html"),
-          );
-      });
-      await Promise.allSettled(promises);
-      await removeEmptyDirectories();
-      body = index
-        .replace(
-          '<base href="" />',
-          `<base href="" />
-    <script type="importmap">
-${JSON.stringify(imap, null, 1)}
-    </script>
-    <link rel="alternate" title="${title}" type="application/feed+json" href="./feed.json" />
-    <link rel="alternate" title="${title}" type="application/atom+xml" href="./feed.xml" />
-    <link rel="alternate" title="${title}" type="application/rss+xml" href="./feed-rss.xml" />`,
-        )
-        .replace(
-          "</head>",
-          `  ${Object.values(imap.imports)
-            .filter((href) => !href.endsWith("/"))
-            .map(
-              (href) => `<link rel="modulepreload" crossorigin href="${href}">`,
-            ).join(`
-    `)}
-  </head>`,
-        );
-      oldPages.length = 0;
-      (page as TAppPage[])
-        .filter(({ path }) => path !== undefined)
-        .forEach((value) => {
-          const { loc, path } = value;
-          oldPages.push({ loc, path });
-          void putPage(value);
-        });
-    }, second),
-    { deep: true },
+  if (loc)
+    putObject(`${loc}/index.html`, htm, "text/html").catch(consola.error);
+
+  putObject(path ? `${path}/index.html` : "index.html", htm, "text/html").catch(
+    consola.error,
   );
-
-  return putPage;
-})();
+};
 
 /**
- * Cleans up resources associated with pages
+ * Gets or creates a Monaco editor model
  *
- * @param value - The array of pages to clean up
+ * @param id - The ID of the model
+ * @param ext - The file extension
+ * @param language - The programming language
+ * @param mime - The MIME type
+ * @param init - The initial content
+ * @returns The Monaco editor model
  */
-const cleaner = (value: TAppPage[]) => {
-    value.forEach((page) => {
-      const { children, id, images } = page;
-      if (children.length) cleaner(children as TAppPage[]);
-      images.forEach(({ url }) => {
-        void deleteObject(url);
-      });
-      if (id) {
-        void deleteObject(`pages/${id}.vue`);
-        void deleteObject(`pages/${id}.jsonld`);
-      }
-    });
-  },
+const getModel = async (
+  id: string,
+  ext: string,
+  language: string,
+  mime: string,
+  init: string,
+) => {
+  const uri = Uri.parse(`file:///${id}.${language}`);
+  let model = editor.getModel(uri);
   /**
-   * Parses a string into an HTML document
-   *
-   * @param value - The HTML string to parse
-   * @returns The parsed HTML document
+   * Initializes the object by saving model content to storage
    */
-  getDocument = (value: string) =>
-    parser.parseFromString(
-      `<head><base href="//"></head><body>${value}</body>`,
-      "text/html",
-    ),
-  /**
-   * Gets or creates a Monaco editor model
-   *
-   * @param id - The ID of the model
-   * @param ext - The file extension
-   * @param language - The programming language
-   * @param mime - The MIME type
-   * @param init - The initial content
-   * @returns The Monaco editor model
-   */
-  getModel = async (
-    id: string,
-    ext: string,
-    language: string,
-    mime: string,
-    init: string,
-  ) => {
-    const uri = Uri.parse(`file:///${id}.${language}`);
-    let model = editor.getModel(uri);
-    /**
-     * Initializes the object by saving model content to storage
-     */
-    const initObject = async () => {
-      if (model && id) {
-        putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
-          consola.error,
-        );
-        if (language === "json" && atlas.value[id])
-          void (await putPage)(atlas.value[id] as TAppPage);
-      }
-    };
-    if (!model) {
-      const value = await getObjectText(`pages/${id}.${ext}`, cache);
-      model = editor.createModel(value || init, language, uri);
-      model.onDidChangeContent(debounce(initObject, second));
-      if (!value) await initObject();
+  const initObject = () => {
+    if (model && id) {
+      putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
+        consola.error,
+      );
+      if (language === "json" && atlas.value[id])
+        void putPage(atlas.value[id] as TAppPage);
     }
-    return model;
   };
+  if (!model) {
+    const value = await getObjectText(`pages/${id}.${ext}`, cache);
+    model = editor.createModel(value || init, language, uri);
+    model.onDidChangeContent(debounce(initObject, second));
+    if (!value) initObject();
+  }
+  return model;
+};
 
 /* -------------------------------------------------------------------------- */
 /*                            Вычисляемые параметры                           */
@@ -412,16 +387,19 @@ const contenteditable = { value: false, writable },
   };
 
 /* -------------------------------------------------------------------------- */
-/*                                 Смотрители                                 */
+/*                             Функции смотрителей                            */
 /* -------------------------------------------------------------------------- */
 
-watch(deleted, (value) => {
-  if (value) cleaner([value as TAppPage]);
-});
-
-watch(
-  the,
-  (value, oldValue) => {
+/**
+ * Watcher function that handles clearing images when the page changes.
+ *
+ * @param value The new page value that triggered the watcher
+ * @param oldValue The previous page value before the change
+ */
+const clearImages = (
+    value: TAppPage | undefined,
+    oldValue: TAppPage | undefined,
+  ) => {
     const images = value?.images.map(({ url = "" }) => url);
     if (images) {
       if (value?.id === oldValue?.id) {
@@ -437,113 +415,119 @@ watch(
       prevImages.push(...images);
     }
   },
-  { deep: true },
-);
-
-watch(pages, (objects) => {
-  objects.forEach((object) => {
-    Object.defineProperties(object, {
-      contenteditable,
-      html,
-      jsonld,
-      sfc,
+  /**
+   * Defines properties on an array of page objects
+   *
+   * @param objects The array of page objects to define properties on
+   */
+  defineProperties = (objects: TPage[]) => {
+    objects.forEach((object) => {
+      Object.defineProperties(object, {
+        contenteditable,
+        html,
+        jsonld,
+        sfc,
+      });
     });
-  });
-});
-
-watch(bucket, async (value) => {
-  if (value) {
-    (async () => {
-      nodes.push(
+  },
+  /**
+   * Initializes the application with data from storage
+   *
+   * @param value The initialization value that triggers data loading when
+   *   truthy
+   */
+  init = async (value: string) => {
+    if (value) {
+      const [getIndex, getFonts, getImportmap, getFeed, getCname, getManifest] =
         (
-          JSON.parse(
-            (await getObjectText("index.json", cache)) || "[{}]",
-          ) as TPage[]
-        )[0] ?? ({} as TPage),
-      );
-    })().catch(consola.error);
-    (async () => {
-      fonts.length = 0;
-      fonts.push(
-        ...(JSON.parse(
-          (await getObjectText("fonts.json", cache)) || "[]",
-        ) as never[]),
-      );
-    })().catch(consola.error);
-    (async () => {
-      const { imports } = JSON.parse(
-        (await getObjectText("index.importmap", cache)) || "{}",
-      ) as TImportmap;
-      importmap.imports = imports;
-    })().catch(consola.error);
-    (async () => {
-      const { items } = JSON.parse(
-        (await getObjectText("feed.json", cache)) || "{}",
-      ) as TFeed;
-      feed.items = items;
-    })().catch(consola.error);
-    (async () => {
-      {
-        const [cname = ""] = (await getObjectText("CNAME", cache)).split(
-          "\n",
-          1,
-        );
-        domain.value = cname.trim();
-      }
-      watch(domain, (cname) => {
-        putObject("CNAME", cname, "text/plain").catch(consola.error);
-      });
-    })().catch(consola.error);
-    const [localManifest, serverManifest] = (
-      [
-        manifest,
-        JSON.parse((await getObjectText(".vite/manifest.json", cache)) || "{}"),
-      ] as Record<string, Record<string, string[]> | undefined>[]
-    ).map(
-      (element) =>
-        new Set(
-          [
-            ...Object.values(element).map(({ file } = {}) => file),
-            ...(element["index.html"]?.css ?? []),
-          ].filter(Boolean) as string[],
+          await Promise.all(
+            [
+              "index.json",
+              "fonts.json",
+              "index.importmap",
+              "feed.json",
+              "CNAME",
+              ".vite/manifest.json",
+            ].map((file) => getObjectText(file, cache)),
+          )
+        ).map((value) => value || undefined);
+
+      const [cname = ""] = getCname?.split("\n", 1) ?? [],
+        [localManifest, serverManifest] = (
+          [manifest, JSON.parse(getManifest ?? "{}")] as Record<
+            string,
+            Record<string, string[]> | undefined
+          >[]
+        ).map(
+          (element) =>
+            new Set(
+              [
+                ...Object.values(element).map(({ file } = {}) => file),
+                ...(element["index.html"]?.css ?? []),
+              ].filter(Boolean) as string[],
+            ),
         ),
-    );
-    if (localManifest && serverManifest) {
-      const files = ["robots.txt", "fonts.json"];
-      (
-        await Promise.allSettled(files.map((file) => headObject(file, cache)))
-      ).forEach(({ status }, index) => {
-        if (status === "rejected" && files[index])
-          localManifest.add(files[index]);
+        files = ["robots.txt", "fonts.json"],
+        { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
+        { items } = JSON.parse(getFeed ?? "{}") as TFeed;
+
+      nodes.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
+      fonts.length = 0;
+      fonts.push(...JSON.parse(getFonts ?? "[]"));
+      importmap.imports = imports;
+      feed.items = items;
+      domain.value = cname.trim();
+      if (localManifest && serverManifest) {
+        (
+          await Promise.allSettled(files.map((file) => headObject(file, cache)))
+        ).forEach(({ status }, index) => {
+          if (status === "rejected" && files[index])
+            localManifest.add(files[index]);
+        });
+
+        [...serverManifest]
+          .filter((x) => !localManifest.has(x))
+          .forEach((element) => {
+            deleteObject(element).catch(consola.error);
+          });
+
+        [...localManifest.add(".vite/manifest.json")]
+          .filter((x) => !serverManifest.has(x))
+          .forEach((element) => {
+            (async () => {
+              const body = await (await fetch(`runtime/${element}`)).blob();
+              putObject(
+                element,
+                new Uint8Array(await body.arrayBuffer()),
+                body.type,
+              ).catch(consola.error);
+            })().catch(consola.error);
+          });
+      }
+    } else {
+      nodes.length = 0;
+
+      editor.getModels().forEach((model) => {
+        model.dispose();
       });
-      [...serverManifest]
-        .filter((x) => !localManifest.has(x))
-        .forEach((element) => {
-          deleteObject(element).catch(consola.error);
-        });
-      [...localManifest.add(".vite/manifest.json")]
-        .filter((x) => !serverManifest.has(x))
-        .forEach((element) => {
-          (async () => {
-            const body = await (await fetch(`runtime/${element}`)).blob();
-            putObject(
-              element,
-              new Uint8Array(await body.arrayBuffer()),
-              body.type,
-            ).catch(consola.error);
-          })().catch(consola.error);
-        });
+
+      urls.forEach((url, key) => {
+        URL.revokeObjectURL(url);
+        urls.delete(key);
+      });
     }
-  } else {
-    nodes.length = 0;
-    editor.getModels().forEach((model) => {
-      model.dispose();
-    });
-    urls.forEach((url, key) => {
-      URL.revokeObjectURL(url);
-      urls.delete(key);
-    });
-  }
+  };
+
+/* -------------------------------------------------------------------------- */
+/*                                 Смотрители                                 */
+/* -------------------------------------------------------------------------- */
+
+watch(the, clearImages, { deep });
+watch(pages, defineProperties);
+watch(bucket, init);
+
+watch(domain, (cname) => {
+  putObject("CNAME", cname, "text/plain").catch(consola.error);
 });
 
 watch(
@@ -554,7 +538,7 @@ watch(
         consola.error,
       );
   }, second),
-  { deep: true },
+  { deep },
 );
 
 watch(
@@ -585,7 +569,7 @@ watch(
         "application/importmap+json",
       ).catch(consola.error);
   }),
-  { deep: true },
+  { deep },
 );
 
 watch(
@@ -623,7 +607,7 @@ watch(
       ).catch(consola.error);
     }
   }),
-  { deep: true },
+  { deep },
 );
 
 watch(
@@ -661,5 +645,29 @@ watch(
       ).catch(consola.error);
     }
   }, second),
-  { deep: true },
+  { deep },
+);
+
+watch(
+  [pages, importmap, domain],
+  debounce(async ([page]: [TPage[], TImportmap, string]) => {
+    const promises: Promise<void>[] = [];
+    oldPages.forEach(({ loc, path }) => {
+      if (loc && !page.find((value) => value.loc === loc))
+        promises.push(deleteObject(`${loc}/index.html`));
+      if (!page.find((value) => value.path === path))
+        promises.push(deleteObject(path ? `${path}/index.html` : "index.html"));
+    });
+    await Promise.allSettled(promises);
+    await removeEmptyDirectories();
+    oldPages.length = 0;
+    (page as TAppPage[])
+      .filter(({ path }) => path !== undefined)
+      .forEach((value) => {
+        const { loc, path } = value;
+        oldPages.push({ loc, path });
+        void putPage(value);
+      });
+  }, second),
+  { deep },
 );
