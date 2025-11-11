@@ -2,7 +2,7 @@ import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import { atlas, feed, fonts, importmap, nodes, pages } from "@vuebro/shared";
+import { atlas, feed, fonts, importmap, pages, tree } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
@@ -471,7 +471,7 @@ const clearImages = (
         { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
         { items } = JSON.parse(getFeed ?? "{}") as TFeed;
 
-      nodes.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
+      tree.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
       fonts.length = 0;
       fonts.push(...JSON.parse(getFonts ?? "[]"));
       importmap.imports = imports;
@@ -505,7 +505,7 @@ const clearImages = (
           });
       }
     } else {
-      nodes.length = 0;
+      tree.length = 0;
 
       editor.getModels().forEach((model) => {
         model.dispose();
@@ -531,7 +531,7 @@ watch(domain, (cname) => {
 });
 
 watch(
-  nodes,
+  tree,
   debounce((value) => {
     if (value)
       putObject("index.json", JSON.stringify(value), "application/json").catch(

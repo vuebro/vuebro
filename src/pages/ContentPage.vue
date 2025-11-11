@@ -19,7 +19,7 @@ q-drawer(
     q-separator
     q-tab-panels.col.fit(v-model="drawerTab", keep-alive)
       q-tab-panel.column.no-padding(name="seo")
-        q-list.fit(v-if="nodes && the")
+        q-list.fit(v-if="tree && the")
           q-expansion-item(
             :label="t('Content Tree')",
             default-opened,
@@ -267,7 +267,7 @@ import type { ComponentPublicInstance } from "vue";
 import { createMistral } from "@ai-sdk/mistral";
 import { Icon } from "@iconify/vue";
 import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
-import { importmap, nodes, pages, validateLog } from "@vuebro/shared";
+import { importmap, pages, tree, validateLog } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import {
   extractReasoningMiddleware,
@@ -351,7 +351,7 @@ const $q = useQuasar(),
       if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
     },
   }),
-  id = computed(() => nodes[0]?.id ?? ""),
+  id = computed(() => tree[0]?.id ?? ""),
   jsonldRef = useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
   length = 20,
   list = ref<{ content: string[]; role: string }[]>([]),

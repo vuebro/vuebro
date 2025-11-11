@@ -26,7 +26,7 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
   q-tree.q-ma-xs(
     ref="qtree",
     v-model:expanded="expanded",
-    :nodes,
+    :nodes="tree",
     :selected,
     no-selection-unset,
     node-key="id"
@@ -62,10 +62,10 @@ import {
   atlas,
   down,
   left,
-  nodes,
   pages,
   remove,
   right,
+  tree,
   up,
 } from "@vuebro/shared";
 import { useQuasar } from "quasar";
@@ -88,7 +88,7 @@ const $q = useQuasar(),
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
-  expanded = ref([nodes[0]?.id]),
+  expanded = ref([tree[0]?.id]),
   message = t("Do you really want to delete?"),
   qtree = ref<QTree>(),
   state = ref(false),

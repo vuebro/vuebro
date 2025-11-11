@@ -1,5 +1,5 @@
 import { defineBoot } from "#q-app/wrappers";
-import { nodes } from "@vuebro/shared";
+import { tree } from "@vuebro/shared";
 import routes from "src/router/routes";
 import { selected } from "stores/app";
 import { bucket } from "stores/io";
@@ -12,7 +12,7 @@ export default defineBoot(({ router }) => {
     if (path === "/" && route) {
       bucket.value = "";
       selected.value = undefined;
-      nodes.length = 0;
+      tree.length = 0;
       router.clearRoutes();
       router.addRoute(route);
     }

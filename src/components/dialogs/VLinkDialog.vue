@@ -6,7 +6,7 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
     q-card-section.q-dialog-plugin__form.scroll.col
       q-tree(
         v-model:selected="selected",
-        :nodes,
+        :nodes="tree",
         default-expand-all,
         no-selection-unset,
         node-key="id",
@@ -30,7 +30,7 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { atlas, nodes } from "@vuebro/shared";
+import { atlas, tree } from "@vuebro/shared";
 import { useDialogPluginComponent } from "quasar";
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
@@ -48,6 +48,6 @@ const selected = ref<string | undefined>(),
 
 defineEmits([...useDialogPluginComponent.emits]);
 
-const [{ id } = {}] = nodes;
+const [{ id } = {}] = tree;
 selected.value = id;
 </script>
