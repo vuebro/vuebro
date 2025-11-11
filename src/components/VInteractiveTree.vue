@@ -69,7 +69,7 @@ import {
   up,
 } from "@vuebro/shared";
 import { useQuasar } from "quasar";
-import { deleted, selected } from "stores/app";
+import { cleaner, selected } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
 import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -129,7 +129,7 @@ const clickAdd = () => {
     if (the.value?.parent)
       $q.dialog({ cancel, message, persistent, title }).onOk(() => {
         if (the.value?.id) {
-          deleted.value = the.value;
+          cleaner(the.value);
           const id = remove(the.value.id);
           if (id) selected.value = id;
         }
