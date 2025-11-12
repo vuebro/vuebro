@@ -267,7 +267,7 @@ import type { ComponentPublicInstance } from "vue";
 import { createMistral } from "@ai-sdk/mistral";
 import { Icon } from "@iconify/vue";
 import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
-import { log as defaultLog, importmap, nodes, tree } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import {
   extractReasoningMiddleware,
@@ -297,8 +297,10 @@ import {
   page,
   persistent,
 } from "stores/defaults";
-import { computed, nextTick, ref, useTemplateRef, watch } from "vue";
+import { computed, nextTick, ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
+const { importmap, log: defaultLog, nodes, tree } = toRefs(sharedStore);
 
 const $q = useQuasar(),
   apiKey = useStorage("apiKey", ""),
@@ -341,7 +343,7 @@ const $q = useQuasar(),
       if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
     },
   }),
-  id = computed(() => tree[0]?.id ?? ""),
+  id = computed(() => tree.value[0]?.id ?? ""),
   jsonldRef = useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
   length = 20,
   list = ref<{ content: string[]; role: string }[]>([]),
@@ -395,7 +397,7 @@ const $q = useQuasar(),
   tab = ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
-    ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
+    ...Object.keys(importmap.value.imports).filter((value) => value !== "vue"),
   ]),
   vueRef = useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"),
   { icons } = mdi as Record<"icons", IconNameArray>,

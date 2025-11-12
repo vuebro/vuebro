@@ -56,25 +56,17 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
 import type { TPage } from "@vuebro/shared";
 import type { QTree } from "quasar";
 
-import {
-  add,
-  addChild,
-  down,
-  kvNodes,
-  left,
-  nodes,
-  remove,
-  right,
-  tree,
-  up,
-} from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useQuasar } from "quasar";
 import { cleaner, selected } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
-import { computed, ref, watch } from "vue";
+import { computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { t } = useI18n();
+const { add, addChild, down, left, remove, right, up } = sharedStore,
+  { kvNodes, nodes, tree } = toRefs(sharedStore),
+  { t } = useI18n();
+
 const $q = useQuasar(),
   errors = [
     (propNode: TPage) => !propNode.name,
@@ -88,7 +80,7 @@ const $q = useQuasar(),
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
-  expanded = ref([tree[0]?.id]),
+  expanded = ref([tree.value[0]?.id]),
   message = t("Do you really want to delete?"),
   qtree = ref<QTree>(),
   state = ref(false),

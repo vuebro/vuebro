@@ -61,7 +61,7 @@ import type {
 
 import initUnocssRuntime from "@unocss/runtime";
 import presets from "@vuebro/configs/uno/presets";
-import { fonts as Fonts } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
 import VChipsInputDialog from "components/dialogs/VChipsInputDialog.vue";
@@ -79,7 +79,15 @@ import {
   reset,
 } from "stores/defaults";
 import { putObject } from "stores/io";
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from "vue";
+import {
+  computed,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  toRefs,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 
 let rootElement: () => Element | undefined;
@@ -91,11 +99,11 @@ let rootElement: () => Element | undefined;
  * @returns An object mapping with underscored keys
  */
 const getFontsObjectFromArray = (fonts: TFonts) =>
-  Object.fromEntries(
-    fonts.map((value) => [value.toLowerCase().replace(/ /g, "_"), value]),
-  );
-
-const { files, open } = useFileDialog({ accept, reset }),
+    Object.fromEntries(
+      fonts.map((value) => [value.toLowerCase().replace(/ /g, "_"), value]),
+    ),
+  { files, open } = useFileDialog({ accept, reset }),
+  { fonts: Fonts } = toRefs(sharedStore),
   { t } = useI18n();
 
 const $q = useQuasar(),
@@ -112,7 +120,7 @@ const $q = useQuasar(),
       "Times New Roman",
       "Verdana",
     ]),
-    ...getFontsObjectFromArray(Fonts),
+    ...getFontsObjectFromArray(Fonts.value),
   })),
   props = withDefaults(
     defineProps<{

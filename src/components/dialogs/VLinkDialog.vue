@@ -30,24 +30,22 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
-import { kvNodes, tree } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useDialogPluginComponent } from "quasar";
-import { computed, ref } from "vue";
+import { computed, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
+  { kvNodes, tree } = toRefs(sharedStore),
   { message, title } = defineProps<{
     message: string;
     title: string;
   }>(),
   { t } = useI18n();
 
-const selected = ref<string | undefined>(),
+const selected = ref<string | undefined>(tree.value[0]?.id),
   the = computed(() => kvNodes.value[selected.value ?? ""]);
 
 defineEmits([...useDialogPluginComponent.emits]);
-
-const [{ id } = {}] = tree;
-selected.value = id;
 </script>

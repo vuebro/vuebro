@@ -2,7 +2,7 @@ import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
-import { feed, fonts, importmap, kvNodes, nodes, tree } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
@@ -20,7 +20,7 @@ import {
   removeEmptyDirectories,
 } from "stores/io";
 import { toXML } from "to-xml";
-import { computed, reactive, ref, watch } from "vue";
+import { computed, reactive, ref, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
@@ -33,6 +33,8 @@ export type TAppPage = TPage & {
 
 let descriptor: SFCDescriptor | undefined;
 
+const { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore);
+
 const [index, manifest] = await Promise.all(
     ["index.html", ".vite/manifest.json"].map((value) =>
       ofetch(`runtime/${value}`),
@@ -44,7 +46,7 @@ const [index, manifest] = await Promise.all(
         '<base href="" />',
         `<base href="" />
     <script type="importmap">
-${JSON.stringify(importmap, null, 1)}
+${JSON.stringify(importmap.value, null, 1)}
     </script>
     <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
     <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
@@ -52,7 +54,7 @@ ${JSON.stringify(importmap, null, 1)}
       )
       .replace(
         "</head>",
-        `  ${Object.values(importmap.imports)
+        `  ${Object.values(importmap.value.imports)
           .filter((href) => !href.endsWith("/"))
           .map(
             (href) => `<link rel="modulepreload" crossorigin href="${href}">`,
@@ -471,11 +473,11 @@ const clearImages = (
         { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
         { items } = JSON.parse(getFeed ?? "{}") as TFeed;
 
-      tree.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
-      fonts.length = 0;
-      fonts.push(...JSON.parse(getFonts ?? "[]"));
-      importmap.imports = imports;
-      feed.items = items;
+      tree.value.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
+      fonts.value.length = 0;
+      fonts.value.push(...JSON.parse(getFonts ?? "[]"));
+      importmap.value.imports = imports;
+      feed.value.items = items;
       domain.value = cname.trim();
       if (localManifest && serverManifest) {
         (
@@ -505,7 +507,7 @@ const clearImages = (
           });
       }
     } else {
-      tree.length = 0;
+      tree.value.length = 0;
 
       editor.getModels().forEach((model) => {
         model.dispose();

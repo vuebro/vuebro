@@ -81,7 +81,7 @@ q-page.column
           .text-overline {{ t("ver") }}.: {{ APP_VERSION }}
 </template>
 <script setup lang="ts">
-import { credentials as defaultCredentials } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
@@ -92,11 +92,12 @@ import { useQuasar } from "quasar";
 import { rightDrawer } from "stores/app";
 import { mergeDefaults, persistent } from "stores/defaults";
 import { bucket, headBucket, setFileSystemDirectoryHandle } from "stores/io";
-import { triggerRef } from "vue";
+import { toRefs, triggerRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
-const { t } = useI18n();
+const { credentials: defaultCredentials } = toRefs(sharedStore),
+  { t } = useI18n();
 
 const $q = useQuasar(),
   APP_VERSION = __APP_VERSION__,

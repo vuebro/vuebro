@@ -1,6 +1,5 @@
 import type { S3ClientConfig } from "@aws-sdk/client-s3";
 import type { StreamingBlobPayloadInputTypes } from "@smithy/types";
-import type { TCredentials } from "@vuebro/shared";
 
 import {
   DeleteObjectCommand,
@@ -11,23 +10,19 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
-import { validateCredentials } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import CryptoJS from "crypto-js";
 import { mergeDefaults } from "stores/defaults";
+import { toRefs } from "vue";
 
 let s3Client: S3Client | undefined;
 
-export const credential = useStorage(
-    "s3",
-    () => {
-      const value = {} as TCredentials;
-      validateCredentials?.(value) as boolean;
-      return value;
-    },
-    localStorage,
-    { mergeDefaults },
-  ),
+const { credentials: defaultCredentials } = toRefs(sharedStore);
+
+export const credential = useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
   removeEmptyDirectories = undefined,
   /**
    * Sets or clears the S3 client instance

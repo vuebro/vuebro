@@ -75,7 +75,7 @@ q-layout(view="hHh Lpr lff")
 <script setup lang="ts">
 import type { TFeed } from "@vuebro/shared";
 
-import { feed, fonts, importmap } from "@vuebro/shared";
+import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import VFeedDialog from "components/dialogs/VFeedDialog.vue";
@@ -89,11 +89,13 @@ import "virtual:uno.css";
 import { domain, rightDrawer } from "stores/app";
 import { cache, persistent } from "stores/defaults";
 import { bucket, getObjectText, putObject } from "stores/io";
+import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
   ai = useStorage("apiKey", ""),
   cancel = true,
+  { feed, fonts, importmap } = toRefs(sharedStore),
   { t } = useI18n();
 
 /**
@@ -148,9 +150,9 @@ const clickAI = () => {
   clickFeed = () => {
     $q.dialog({
       component: VFeedDialog,
-      componentProps: { feed, persistent: true },
+      componentProps: { feed: feed.value, persistent: true },
     }).onOk((data: TFeed["items"]) => {
-      feed.items = data
+      feed.value.items = data
         .filter(({ title }) => title)
         .map((item) => {
           const { attachments, url, ...rest } = item;
@@ -175,10 +177,10 @@ const clickAI = () => {
   clickFonts = () => {
     $q.dialog({
       component: VFontsDialog,
-      componentProps: { fonts, persistent: true },
+      componentProps: { fonts: fonts.value, persistent: true },
     }).onOk((data: string[]) => {
-      fonts.length = 0;
-      fonts.push(...data);
+      fonts.value.length = 0;
+      fonts.value.push(...data);
     });
   },
   /**
@@ -187,9 +189,9 @@ const clickAI = () => {
   clickImportmap = () => {
     $q.dialog({
       component: VImportmapDialog,
-      componentProps: { importmap, persistent: true },
+      componentProps: { importmap: importmap.value, persistent: true },
     }).onOk((data: Record<string, string>) => {
-      importmap.imports = data;
+      importmap.value.imports = data;
     });
   },
   /**
