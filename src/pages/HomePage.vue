@@ -86,9 +86,11 @@ import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
 import { consola } from "consola/browser";
+// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
-import contentPage from "pages/ContentPage.vue";
+import ContentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
+import MainLayout from "src/layouts/MainLayout.vue";
 import { rightDrawer } from "stores/app";
 import { mergeDefaults, persistent } from "stores/defaults";
 import { bucket, headBucket, setFileSystemDirectoryHandle } from "stores/io";
@@ -121,7 +123,11 @@ const add = () => {
     const name = "main",
       path = `/${name}`;
     bucket.value = bucketValue;
-    router.addRoute({ component: contentPage, name, path });
+    router.addRoute({
+      children: [{ component: ContentPage, name, path: "" }],
+      component: MainLayout,
+      path,
+    });
     router.push(path).catch(consola.error);
   },
   /**

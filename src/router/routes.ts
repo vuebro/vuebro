@@ -1,15 +1,16 @@
-import type { Component } from "vue";
-
+import MainLayout from "layouts/MainLayout.vue";
 import HomePage from "pages/HomePage.vue";
 
-/* -------------------------------------------------------------------------- */
-
-const component = HomePage as Component,
-  name = "Home",
-  path = "/:pathMatch(.*)*";
-
-/* -------------------------------------------------------------------------- */
-/*                                   Exports                                  */
-/* -------------------------------------------------------------------------- */
-
-export default [{ component, name, path }];
+export default [
+  {
+    children: [
+      {
+        component: HomePage,
+        name: "Home",
+        path: "",
+      },
+    ],
+    component: MainLayout,
+    path: "/:pathMatch(.*)*",
+  },
+];

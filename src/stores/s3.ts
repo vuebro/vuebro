@@ -12,6 +12,7 @@ import {
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
+// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
 import { mergeDefaults } from "stores/defaults";
 import { toRefs } from "vue";

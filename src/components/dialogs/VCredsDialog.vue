@@ -77,6 +77,7 @@ import type { QInput } from "quasar";
 
 import endpoints from "assets/endpoints.json";
 import regions from "assets/regions.json";
+// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
 import { useDialogPluginComponent, useQuasar } from "quasar";
 import { configurable, enumerable, writable } from "stores/defaults";
