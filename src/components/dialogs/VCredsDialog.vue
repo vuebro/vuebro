@@ -77,7 +77,7 @@ import type { QInput } from "quasar";
 
 import endpoints from "assets/endpoints.json";
 import regions from "assets/regions.json";
-import CryptoJS from "crypto-js";
+import { AES, Utf8 } from "crypto-es";
 import { useDialogPluginComponent, useQuasar } from "quasar";
 import { configurable, enumerable, writable } from "stores/defaults";
 import { credential } from "stores/s3";
@@ -100,9 +100,7 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
  * @returns - The decrypted string or null if no pin is provided
  */
 const decrypt = (value?: string) =>
-  pin
-    ? CryptoJS.AES.decrypt(value ?? "", pin).toString(CryptoJS.enc.Utf8)
-    : (value ?? null);
+  pin ? AES.decrypt(value ?? "", pin).toString(Utf8) : (value ?? null);
 
 const $q = useQuasar(),
   cred = credential.value[model ?? ""],
@@ -150,7 +148,7 @@ const click = (value: Record<string, null | string>) => {
       ? Object.fromEntries(
           Object.entries(obj).map(([key, value]) => [
             key,
-            CryptoJS.AES.encrypt(value ?? "", pin).toString(),
+            AES.encrypt(value ?? "", pin).toString(),
           ]),
         )
       : obj,
