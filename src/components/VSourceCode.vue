@@ -15,17 +15,18 @@ import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null;
 
+const { apiKey, model, technologies } = defineProps<{
+  apiKey: string;
+  model: Promise<monaco.editor.ITextModel>;
+  technologies: string[];
+}>();
+
 const ambiguousCharacters = false,
   automaticLayout = true,
   fixedOverflowWidgets = true,
   monacoRef = useTemplateRef<HTMLElement>("monacoRef"),
   scrollBeyondLastLine = false,
   unicodeHighlight = { ambiguousCharacters },
-  { apiKey, model, technologies } = defineProps<{
-    apiKey: string;
-    model: Promise<monaco.editor.ITextModel>;
-    technologies: string[];
-  }>(),
   { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
 
 watch(
