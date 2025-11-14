@@ -12,7 +12,7 @@ import {
 import { FetchHttpHandler } from "@smithy/fetch-http-handler";
 import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
-import CryptoJS from "crypto-js";
+import { AES, Utf8 } from "crypto-es";
 import { mergeDefaults } from "stores/defaults";
 import { toRefs } from "vue";
 
@@ -107,19 +107,10 @@ export const deleteObject = async (Bucket: string, Key: string) => {
     let { accessKeyId, endpoint, region, secretAccessKey } =
       credential.value[Bucket] ?? {};
     if (pin) {
-      accessKeyId = CryptoJS.AES.decrypt(accessKeyId ?? "", pin).toString(
-        CryptoJS.enc.Utf8,
-      );
-      endpoint = CryptoJS.AES.decrypt(endpoint ?? "", pin).toString(
-        CryptoJS.enc.Utf8,
-      );
-      region = CryptoJS.AES.decrypt(region ?? "", pin).toString(
-        CryptoJS.enc.Utf8,
-      );
-      secretAccessKey = CryptoJS.AES.decrypt(
-        secretAccessKey ?? "",
-        pin,
-      ).toString(CryptoJS.enc.Utf8);
+      accessKeyId = AES.decrypt(accessKeyId ?? "", pin).toString(Utf8);
+      endpoint = AES.decrypt(endpoint ?? "", pin).toString(Utf8);
+      region = AES.decrypt(region ?? "", pin).toString(Utf8);
+      secretAccessKey = AES.decrypt(secretAccessKey ?? "", pin).toString(Utf8);
     }
     const credentials = { accessKeyId, secretAccessKey };
     s3Client = new S3Client({
