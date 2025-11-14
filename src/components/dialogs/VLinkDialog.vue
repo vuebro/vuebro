@@ -35,13 +35,14 @@ import { useDialogPluginComponent } from "quasar";
 import { computed, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
+const { message, title } = defineProps<{
+  message: string;
+  title: string;
+}>();
+
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { kvNodes, tree } = toRefs(sharedStore),
-  { message, title } = defineProps<{
-    message: string;
-    title: string;
-  }>(),
   { t } = useI18n();
 
 const selected = ref<string | undefined>(tree.value[0]?.id),
