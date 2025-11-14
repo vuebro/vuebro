@@ -29,7 +29,7 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 import type { QInput } from "quasar";
 import type { ComponentPublicInstance } from "vue";
 
-import CryptoJS from "crypto-js";
+import { AES } from "crypto-es";
 import { useDialogPluginComponent } from "quasar";
 import { computed, ref, watch } from "vue";
 
@@ -70,7 +70,7 @@ watch(
   payload,
   (value) => {
     if (value.length === length.value) {
-      if (model) error.value = !CryptoJS.AES.decrypt(model, value).toString();
+      if (model) error.value = !AES.decrypt(model, value).toString();
       if (!error.value) onDialogOK(value);
     } else error.value = false;
   },
