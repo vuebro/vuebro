@@ -86,7 +86,6 @@ import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
 import { consola } from "consola/browser";
-// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
 import ContentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
