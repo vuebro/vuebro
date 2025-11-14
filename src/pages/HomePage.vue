@@ -86,7 +86,7 @@ import { useStorage } from "@vueuse/core";
 import VCredsDialog from "components/dialogs/VCredsDialog.vue";
 import VOtpDialog from "components/dialogs/VOtpDialog.vue";
 import { consola } from "consola/browser";
-import CryptoJS from "crypto-js";
+import { AES, Utf8 } from "crypto-es";
 import ContentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
 import MainLayout from "src/layouts/MainLayout.vue";
@@ -200,17 +200,17 @@ const add = () => {
       if (cred)
         if (name === cred.Bucket) {
           Object.keys(cred).forEach((key) => {
-            cred[key] = CryptoJS.AES.encrypt(
+            cred[key] = AES.encrypt(
               (cred[key] ?? "") as string,
               payload,
             ).toString();
           });
         } else {
           Object.keys(cred).forEach((key) => {
-            cred[key] = CryptoJS.AES.decrypt(
+            cred[key] = AES.decrypt(
               (cred[key] ?? "") as string,
               payload,
-            ).toString(CryptoJS.enc.Utf8);
+            ).toString(Utf8);
           });
         }
     });
