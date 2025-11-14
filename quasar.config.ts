@@ -1,6 +1,5 @@
 import { defineConfig } from "#q-app/wrappers";
 import { fileURLToPath } from "url";
-import { mergeConfig } from "vite";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig(() => ({
@@ -10,19 +9,20 @@ export default defineConfig(() => ({
     alias: { "node:path": "path-browserify" },
     /**
      * Extends the Vite configuration
-     *
-     * @param config - The Vite configuration object to extend
      */
-    extendViteConf: (config) => {
-      config.base = "./";
-      config.define = mergeConfig(
-        config.define ?? {},
-        {
-          __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
-        },
-        false,
-      );
-    },
+    extendViteConf: () => ({
+      base: "./",
+      define: {
+        __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+      },
+      plugins: [
+        viteStaticCopy({
+          targets: [
+            { dest: "runtime", src: "./node_modules/@vuebro/runtime/dist/*" },
+          ],
+        }),
+      ],
+    }),
     target: { browser: ["es2022", "firefox115", "chrome115", "safari15"] },
     typescript: { strict: true, vueShim: true },
     vitePlugins: [
@@ -43,15 +43,7 @@ export default defineConfig(() => ({
         { server: false },
       ],
       ["@unocss/vite"],
-      [
-        // @ts-expect-error Plugin<any>[]
-        viteStaticCopy,
-        {
-          targets: [
-            { dest: "runtime", src: "./node_modules/@vuebro/runtime/dist/*" },
-          ],
-        },
-      ],
+      ["@vue-macros/reactivity-transform/vite"],
     ],
   },
   css: ["app.css"],
