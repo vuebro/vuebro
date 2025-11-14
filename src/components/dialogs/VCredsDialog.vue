@@ -77,7 +77,6 @@ import type { QInput } from "quasar";
 
 import endpoints from "assets/endpoints.json";
 import regions from "assets/regions.json";
-// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
 import { useDialogPluginComponent, useQuasar } from "quasar";
 import { configurable, enumerable, writable } from "stores/defaults";
@@ -85,12 +84,13 @@ import { credential } from "stores/s3";
 import { ref, triggerRef, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
+const { model = undefined, pin = undefined } = defineProps<{
+  model?: string;
+  pin?: string;
+}>();
+
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
-  { model = undefined, pin = undefined } = defineProps<{
-    model?: string;
-    pin?: string;
-  }>(),
   { t } = useI18n();
 
 /**
