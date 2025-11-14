@@ -29,22 +29,19 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 import type { QInput } from "quasar";
 import type { ComponentPublicInstance } from "vue";
 
-// eslint-disable-next-line depend/ban-dependencies
 import CryptoJS from "crypto-js";
 import { useDialogPluginComponent } from "quasar";
 import { computed, ref, watch } from "vue";
 
-const { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent(),
-  { model } = defineProps<{
-    model: string;
-  }>();
+const { model } = defineProps<{ model: string }>();
 
 const error = ref(false),
   fields = ref<QInput[]>([]),
   fieldValues = ref<number[]>([]),
   length = ref(4),
   payload = computed(() => fieldValues.value.filter(Boolean).join("")),
-  selected = ref(0);
+  selected = ref(0),
+  { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
 
 /**
  * Focuses on the field at the given index
