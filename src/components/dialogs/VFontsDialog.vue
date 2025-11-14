@@ -65,9 +65,10 @@ import { uid, useDialogPluginComponent, useQuasar } from "quasar";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
+const { fonts } = defineProps<{ fonts: string[] }>();
+
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
-  { fonts } = defineProps<{ fonts: string[] }>(),
   { t } = useI18n();
 
 const $q = useQuasar(),
