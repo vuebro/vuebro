@@ -72,13 +72,14 @@ import { staticEntries } from "stores/app";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
+const { importmap } = defineProps<{
+  importmap: { imports: Record<string, string> };
+}>();
+
 const external = staticEntries.map(([name]) => name),
   filter = ref(""),
   { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
-  { importmap } = defineProps<{
-    importmap: { imports: Record<string, string> };
-  }>(),
   { imports } = importmap,
   { t } = useI18n();
 
