@@ -111,9 +111,10 @@ import { useI18n } from "vue-i18n";
 
 let row: TFeed["items"][0] | undefined;
 
+const { feed } = defineProps<{ feed: TFeed }>();
+
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
-  { feed } = defineProps<{ feed: TFeed }>(),
   { items } = feed,
   { onChange, open } = useFileDialog({
     accept,
