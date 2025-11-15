@@ -58,8 +58,9 @@ import type { QTree } from "quasar";
 
 import { sharedStore } from "@vuebro/shared";
 import { useQuasar } from "quasar";
-import { cleaner, selected } from "stores/app";
+import { selected } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
+import { deleteObject } from "stores/io";
 import { computed, ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -68,6 +69,26 @@ const { add, addChild, down, left, remove, right, up } = sharedStore,
   { t } = useI18n();
 
 const $q = useQuasar(),
+  /**
+   * Cleans up resources associated with pages
+   *
+   * @param value - The array of pages to clean up
+   */
+  cleaner = (value: null | TPage | TPage[] | undefined) => {
+    if (value)
+      (Array.isArray(value) ? value : [value]).forEach(
+        ({ children, id, images }) => {
+          cleaner(children);
+          images.forEach(({ url }) => {
+            void deleteObject(url);
+          });
+          if (id) {
+            void deleteObject(`pages/${id}.vue`);
+            void deleteObject(`pages/${id}.jsonld`);
+          }
+        },
+      );
+  },
   errors = [
     (propNode: TPage) => !propNode.name,
     (propNode: TPage) =>
