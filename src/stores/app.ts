@@ -3,11 +3,11 @@ import type { Ref } from "vue";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
 import { sharedStore } from "@vuebro/shared";
+import { useFetch } from "@vueuse/core";
 import { consola } from "consola/browser";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
-import { ofetch } from "ofetch";
 import { debounce } from "quasar";
 import { cache, deep, second, writable } from "stores/defaults";
 import {
@@ -35,13 +35,12 @@ let descriptor: SFCDescriptor | undefined;
 
 const { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore);
 
-const [index, manifest] = await Promise.all(
-    ["index.html", ".vite/manifest.json"].map((value) =>
-      ofetch(`runtime/${value}`),
-    ),
-  ),
-  body = computed(() =>
-    index
+const { data: manifest } = await useFetch(`runtime/.vite/manifest.json`).json();
+
+const { data: index } = await useFetch(`runtime/index.html`);
+
+const body = computed(() =>
+    (index.value as string)
       .replace(
         '<base href="" />',
         `<base href="" />
@@ -110,7 +109,7 @@ export const cleaner = (value: null | TPage | TPage[] | undefined) => {
   rightDrawer = ref(false),
   selected: Ref<string | undefined> = ref(),
   staticEntries = Object.values(
-    manifest as Record<string, Record<string, string>>,
+    manifest.value as Record<string, Record<string, string>>,
   )
     .filter(({ isStaticEntry }) => isStaticEntry)
     .map(({ file, name }) => [name, file]),
