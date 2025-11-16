@@ -285,7 +285,6 @@ import markedShiki from "marked-shiki";
 import { useQuasar } from "quasar";
 import { createHighlighter } from "shiki";
 import VSourceCode from "src/components/VSourceCode.vue";
-import { mainStore } from "stores/app";
 import {
   cancel,
   deep,
@@ -297,6 +296,7 @@ import {
   page,
   persistent,
 } from "stores/defaults";
+import { mainStore } from "stores/main";
 import { computed, nextTick, ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

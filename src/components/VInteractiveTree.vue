@@ -58,9 +58,9 @@ import type { QTree } from "quasar";
 
 import { sharedStore } from "@vuebro/shared";
 import { useQuasar } from "quasar";
-import { mainStore } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
 import { deleteObject } from "stores/io";
+import { mainStore } from "stores/main";
 import { computed, ref, toRef, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

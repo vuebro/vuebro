@@ -70,7 +70,6 @@ import { consola } from "consola/browser";
 import { ofetch as customFetch } from "ofetch";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
-import { mainStore } from "stores/app";
 import {
   accept,
   bypassDefined,
@@ -79,6 +78,7 @@ import {
   reset,
 } from "stores/defaults";
 import { putObject } from "stores/io";
+import { mainStore } from "stores/main";
 import {
   computed,
   nextTick,

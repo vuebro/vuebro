@@ -46,7 +46,6 @@ import mimes from "assets/mimes.json";
 import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
-import { mainStore } from "stores/app";
 import {
   accept,
   capture,
@@ -56,6 +55,7 @@ import {
   reset,
 } from "stores/defaults";
 import { getObjectBlob, putObject } from "stores/io";
+import { mainStore } from "stores/main";
 import { ref, toRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 

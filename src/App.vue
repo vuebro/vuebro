@@ -4,7 +4,7 @@ router-view
 
 <script setup lang="ts">
 import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
-import type { TAppPage } from "stores/app";
+import type { TAppPage } from "stores/main";
 import type { SFCDescriptor } from "vue/compiler-sfc";
 
 import { sharedStore } from "@vuebro/shared";
@@ -14,7 +14,6 @@ import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
-import { mainStore } from "stores/app";
 import { cache, deep, second, writable } from "stores/defaults";
 import {
   bucket,
@@ -25,6 +24,7 @@ import {
   putObject,
   removeEmptyDirectories,
 } from "stores/io";
+import { mainStore } from "stores/main";
 import { toXML } from "to-xml";
 import { computed, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";

@@ -68,7 +68,7 @@ import type { QTableProps } from "quasar";
 
 import json from "assets/importmap.json";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
-import { mainStore } from "stores/app";
+import { mainStore } from "stores/main";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 

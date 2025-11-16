@@ -1,8 +1,8 @@
 import { defineBoot } from "#q-app/wrappers";
 import { sharedStore } from "@vuebro/shared";
 import routes from "src/router/routes";
-import { mainStore } from "stores/app";
 import { bucket } from "stores/io";
+import { mainStore } from "stores/main";
 import { toRef } from "vue";
 
 const tree = toRef(sharedStore, "tree");
