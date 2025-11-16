@@ -1,5 +1,11 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "compilerOptions": {
+    "types": [
+      "@vue-macros/reactivity-transform/macros-global",
+      "@types/wicg-file-system-access"
+    ]
+  },
   "extends": "./.quasar/tsconfig.json",
   "vueCompilerOptions": {
     "plugins": ["@vue/language-plugin-pug"]

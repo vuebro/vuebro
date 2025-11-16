@@ -59,41 +59,47 @@ import type { QTree } from "quasar";
 import { sharedStore } from "@vuebro/shared";
 import { useQuasar } from "quasar";
 import { cancel, immediate, persistent } from "stores/defaults";
-import { deleteObject } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { computed, ref, toRef, toRefs, watch } from "vue";
+import { ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const selected = toRef(mainStore, "selected");
-const { add, addChild, down, left, remove, right, up } = sharedStore;
-const { kvNodes, nodes, tree } = toRefs(sharedStore);
-const { t } = useI18n();
+let selected = $toRef(mainStore, "selected"),
+  state = $ref(false),
+  visible = $ref(false);
+
+const { kvNodes, nodes, tree } = $(toRefs(sharedStore));
+
+const { add, addChild, down, left, remove, right, up } = sharedStore,
+  { deleteObject } = ioStore;
 
 const $q = useQuasar(),
-  /**
-   * Cleans up resources associated with pages
-   *
-   * @param value - The array of pages to clean up
-   */
-  cleaner = (value: null | TPage | TPage[] | undefined) => {
-    if (value)
-      (Array.isArray(value) ? value : [value]).forEach(
-        ({ children, id, images }) => {
-          cleaner(children);
-          images.forEach(({ url }) => {
-            void deleteObject(url);
-          });
-          if (id) {
-            void deleteObject(`pages/${id}.vue`);
-            void deleteObject(`pages/${id}.jsonld`);
-          }
-        },
-      );
-  },
-  errors = [
+  { t } = useI18n();
+
+/**
+ * Cleans up resources associated with pages
+ *
+ * @param value - The array of pages to clean up
+ */
+const cleaner = (value: null | TPage | TPage[] | undefined) => {
+  if (value)
+    (Array.isArray(value) ? value : [value]).forEach(
+      ({ children, id, images }) => {
+        cleaner(children);
+        images.forEach(({ url }) => {
+          void deleteObject(url);
+        });
+        if (id) {
+          void deleteObject(`pages/${id}.vue`);
+          void deleteObject(`pages/${id}.jsonld`);
+        }
+      },
+    );
+};
+const errors = [
     (propNode: TPage) => !propNode.name,
     (propNode: TPage) =>
-      !!nodes.value.find(
+      !!nodes.find(
         (element) =>
           propNode.path &&
           ((element.id !== propNode.id && element.path === propNode.path) ||
@@ -102,62 +108,61 @@ const $q = useQuasar(),
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
-  expanded = ref([tree.value[0]?.id]),
-  message = t("Do you really want to delete?"),
-  qtree = ref<QTree>(),
-  state = ref(false),
-  the = computed(() =>
-    nodes.value.length ? (kvNodes.value[selected.value] ?? null) : undefined,
-  ),
-  title = t("Confirm"),
-  value = false,
-  visible = ref(false);
+  expanded = ref([tree[0]?.id]),
+  qtree = $ref<QTree>(),
+  value = false;
+
 /**
  * Adds a new node to the tree structure
  */
 const clickAdd = () => {
-    if (the.value?.id) {
-      const id = the.value.parent ? add(the.value.id) : addChild(the.value.id);
+    if (selected) {
+      const id = kvNodes[selected]?.parent ? add(selected) : addChild(selected);
       if (id) {
-        if (the.value.children.length)
-          qtree.value?.setExpanded(the.value.id, true);
-        selected.value = id;
+        if (kvNodes[selected]?.children.length)
+          qtree?.setExpanded(selected, true);
+        selected = id;
       }
     }
-    state.value = true;
+    state = true;
   },
   clickDown = () => {
-    if (the.value?.id) down(the.value.id);
-    state.value = true;
+    if (selected) down(selected);
+    state = true;
   },
   clickLeft = () => {
-    if (the.value?.id) {
-      const id = left(the.value.id);
-      if (id) qtree.value?.setExpanded(id, true);
+    if (selected) {
+      const id = left(selected);
+      if (id) qtree?.setExpanded(id, true);
     }
-    state.value = true;
+    state = true;
   },
   clickRemove = () => {
-    if (the.value?.parent)
-      $q.dialog({ cancel, message, persistent, title }).onOk(() => {
-        if (the.value?.id) {
-          cleaner(the.value);
-          const id = remove(the.value.id);
-          if (id) selected.value = id;
+    if (kvNodes[selected]?.parent)
+      $q.dialog({
+        cancel,
+        message: t("Do you really want to delete?"),
+        persistent,
+        title: t("Confirm"),
+      }).onOk(() => {
+        if (selected) {
+          cleaner(kvNodes[selected]);
+          const id = remove(selected);
+          if (id) selected = id;
         }
       });
-    state.value = true;
+    state = true;
   },
   clickRight = () => {
-    if (the.value?.id) {
-      const id = right(the.value.id);
-      if (id) qtree.value?.setExpanded(id, true);
+    if (selected) {
+      const id = right(selected);
+      if (id) qtree?.setExpanded(id, true);
     }
-    state.value = true;
+    state = true;
   },
   clickUp = () => {
-    if (the.value?.id) up(the.value.id);
-    state.value = true;
+    if (selected) up(selected);
+    state = true;
   },
   /**
    * Checks if a page node has any validation errors
@@ -197,23 +202,25 @@ const clickAdd = () => {
   onIntersection = (entry: IntersectionObserverEntry) => {
     if (
       entry.target instanceof HTMLElement &&
-      entry.target.dataset.id === selected.value
+      entry.target.dataset.id === selected
     )
-      visible.value = entry.isIntersecting;
+      visible = entry.isIntersecting;
   };
+
 watch(
-  the,
+  () => kvNodes[selected],
   (newVal, oldVal) => {
-    visible.value = true;
+    visible = true;
     if (!newVal) {
-      const [{ id } = {}] = nodes.value;
-      selected.value = id ?? "";
+      const [{ id } = {}] = nodes;
+      selected = id ?? "";
     }
     if (oldVal) Reflect.defineProperty(oldVal, "contenteditable", { value });
   },
   { immediate },
 );
 </script>
+
 <style scoped>
 .min-w-96 {
   min-width: 96px;

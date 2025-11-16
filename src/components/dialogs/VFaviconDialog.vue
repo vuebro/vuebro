@@ -18,9 +18,11 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 import type { QUploader } from "quasar";
 
 import { useDialogPluginComponent, useQuasar } from "quasar";
-import { putObject } from "stores/io";
+import { ioStore } from "stores/io";
 import { useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
+
+const { putObject } = ioStore;
 
 const { dialogRef, onDialogHide } = useDialogPluginComponent(),
   { t } = useI18n();

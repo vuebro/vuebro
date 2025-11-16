@@ -87,12 +87,14 @@ import { useQuasar } from "quasar";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
 import { cache, persistent } from "stores/defaults";
-import { bucket, getObjectText, putObject } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toRefs } from "vue";
+import { toRef, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { domain, rightDrawer } = toRefs(mainStore);
+const { getObjectText, putObject } = ioStore;
+const bucket = toRef(ioStore, "bucket");
 
 const $q = useQuasar(),
   ai = useStorage("apiKey", ""),

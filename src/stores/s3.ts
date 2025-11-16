@@ -14,13 +14,12 @@ import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import { AES, Utf8 } from "crypto-es";
 import { mergeDefaults } from "stores/defaults";
-import { toRefs } from "vue";
 
 let s3Client: S3Client | undefined;
 
-const { credentials: defaultCredentials } = toRefs(sharedStore);
+const { credentials: defaults } = sharedStore;
 
-export const credential = useStorage("s3", defaultCredentials, localStorage, {
+export const credential = useStorage("s3", defaults, localStorage, {
     mergeDefaults,
   }),
   removeEmptyDirectories = undefined,

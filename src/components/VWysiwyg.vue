@@ -77,7 +77,7 @@ import {
   persistent,
   reset,
 } from "stores/defaults";
-import { putObject } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import {
   computed,
@@ -91,6 +91,9 @@ import {
 import { useI18n } from "vue-i18n";
 
 let rootElement: () => Element | undefined;
+
+const { putObject } = ioStore;
+
 /**
  * Converts fonts array to an object mapping with underscored keys
  *

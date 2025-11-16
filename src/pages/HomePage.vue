@@ -91,11 +91,14 @@ import ContentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
 import MainLayout from "src/layouts/MainLayout.vue";
 import { mergeDefaults, persistent } from "stores/defaults";
-import { bucket, headBucket, setFileSystemDirectoryHandle } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toRef, toRefs, triggerRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+
+const { headBucket, setFileSystemDirectoryHandle } = ioStore;
+const bucket = toRef(ioStore, "bucket");
 
 const rightDrawer = toRef(mainStore, "rightDrawer");
 const { credentials: defaultCredentials } = toRefs(sharedStore),

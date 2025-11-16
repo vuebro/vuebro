@@ -104,7 +104,7 @@ import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
 import { accept, capture, multiple, persistent, reset } from "stores/defaults";
-import { putObject } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { ref, toRef, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
@@ -112,6 +112,8 @@ import { useI18n } from "vue-i18n";
 let row: TFeed["items"][0] | undefined;
 
 const { feed } = defineProps<{ feed: TFeed }>();
+
+const { putObject } = ioStore;
 
 const domain = toRef(mainStore, "domain");
 

@@ -15,26 +15,27 @@ import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
 import { cache, deep, second, writable } from "stores/defaults";
-import {
-  bucket,
-  deleteObject,
-  getObjectBlob,
-  getObjectText,
-  headObject,
-  putObject,
-  removeEmptyDirectories,
-} from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toXML } from "to-xml";
-import { computed, toRefs, watch } from "vue";
+import { computed, toRef, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
 let descriptor: SFCDescriptor | undefined;
 
-const { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore);
-const { domain, the } = toRefs(mainStore);
-const { manifest, staticEntries, urls } = mainStore;
+const bucket = toRef(ioStore, "bucket"),
+  {
+    deleteObject,
+    getObjectBlob,
+    getObjectText,
+    headObject,
+    putObject,
+    removeEmptyDirectories,
+  } = ioStore,
+  { domain, the } = toRefs(mainStore),
+  { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore),
+  { manifest, staticEntries, urls } = mainStore;
 
 const { data: index } = useFetch(`runtime/index.html`).text();
 

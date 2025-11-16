@@ -12,29 +12,29 @@ export type TAppPage = TPage & {
   sfc: Promise<editor.ITextModel>;
 };
 
-const { kvNodes, nodes } = toRefs(sharedStore);
+const { kvNodes, nodes } = $(toRefs(sharedStore));
 
-const { data } = useFetch("runtime/.vite/manifest.json").json<
-  Record<string, Record<string, string>>
->();
+const { data } = $(
+  useFetch("runtime/.vite/manifest.json").json<
+    Record<string, Record<string, string>>
+  >(),
+);
 
 export const mainStore = reactive({
   domain: "",
-  manifest: data,
+  manifest: $$(data),
   rightDrawer: false,
   selected: "",
   staticEntries: computed(
     () =>
-      data.value &&
-      Object.values(data.value)
+      data &&
+      Object.values(data)
         .filter(({ isStaticEntry }) => isStaticEntry)
         .map(({ file, name }) => [name, file]),
   ),
   the: computed(
     (): TAppPage | undefined =>
-      (kvNodes.value[mainStore.selected] ?? nodes.value[0]) as
-        | TAppPage
-        | undefined,
+      (kvNodes[mainStore.selected] ?? nodes[0]) as TAppPage | undefined,
   ),
   urls: new Map<string, string>(),
 });

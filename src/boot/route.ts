@@ -1,12 +1,13 @@
 import { defineBoot } from "#q-app/wrappers";
 import { sharedStore } from "@vuebro/shared";
 import routes from "src/router/routes";
-import { bucket } from "stores/io";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toRef } from "vue";
 
-const tree = toRef(sharedStore, "tree");
-const selected = toRef(mainStore, "selected");
+const bucket = toRef(ioStore, "bucket"),
+  selected = toRef(mainStore, "selected"),
+  tree = $toRef(sharedStore, "tree");
 
 export default defineBoot(({ router }) => {
   const [route] = routes;
@@ -16,7 +17,7 @@ export default defineBoot(({ router }) => {
     if (path === "/" && route) {
       bucket.value = "";
       selected.value = "";
-      tree.value.length = 0;
+      tree.length = 0;
       router.clearRoutes();
       router.addRoute(route);
     }
