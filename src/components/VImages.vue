@@ -46,7 +46,7 @@ import mimes from "assets/mimes.json";
 import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
-import { the, urls } from "stores/app";
+import { mainStore } from "stores/app";
 import {
   accept,
   capture,
@@ -56,10 +56,13 @@ import {
   reset,
 } from "stores/defaults";
 import { getObjectBlob, putObject } from "stores/io";
-import { ref, watch } from "vue";
+import { ref, toRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 let index = 0;
+
+const the = toRef(mainStore, "the");
+const { urls } = mainStore;
 
 const { onChange, open } = useFileDialog({
     accept,

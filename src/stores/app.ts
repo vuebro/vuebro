@@ -1,10 +1,9 @@
 import type { TPage } from "@vuebro/shared";
-import type { Ref } from "vue";
 
 import { sharedStore } from "@vuebro/shared";
 import { useFetch } from "@vueuse/core";
 import { editor } from "monaco-editor";
-import { computed, reactive, ref, toRefs } from "vue";
+import { computed, reactive, toRefs } from "vue";
 
 export type TAppPage = TPage & {
   contenteditable: boolean;
@@ -15,22 +14,27 @@ export type TAppPage = TPage & {
 
 const { kvNodes, nodes } = toRefs(sharedStore);
 
-export const { data: manifest } = await useFetch(
-  `runtime/.vite/manifest.json`,
-).json();
+const { data } = useFetch("runtime/.vite/manifest.json").json<
+  Record<string, Record<string, string>>
+>();
 
-export const domain = ref(""),
-  rightDrawer = ref(false),
-  selected: Ref<string | undefined> = ref(),
-  staticEntries = Object.values(
-    manifest.value as Record<string, Record<string, string>>,
-  )
-    .filter(({ isStaticEntry }) => isStaticEntry)
-    .map(({ file, name }) => [name, file]),
-  the = computed(
+export const mainStore = reactive({
+  domain: "",
+  manifest: data,
+  rightDrawer: false,
+  selected: "",
+  staticEntries: computed(
     () =>
-      (kvNodes.value[selected.value ?? ""] ?? nodes.value[0]) as
+      data.value &&
+      Object.values(data.value)
+        .filter(({ isStaticEntry }) => isStaticEntry)
+        .map(({ file, name }) => [name, file]),
+  ),
+  the: computed(
+    (): TAppPage | undefined =>
+      (kvNodes.value[mainStore.selected] ?? nodes.value[0]) as
         | TAppPage
         | undefined,
   ),
-  urls = reactive(new Map<string, string>());
+  urls: new Map<string, string>(),
+});

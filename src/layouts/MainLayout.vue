@@ -86,11 +86,13 @@ import mime from "mime";
 import { useQuasar } from "quasar";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
-import { domain, rightDrawer } from "stores/app";
+import { mainStore } from "stores/app";
 import { cache, persistent } from "stores/defaults";
 import { bucket, getObjectText, putObject } from "stores/io";
 import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
+
+const { domain, rightDrawer } = toRefs(mainStore);
 
 const $q = useQuasar(),
   ai = useStorage("apiKey", ""),

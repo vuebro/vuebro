@@ -90,13 +90,14 @@ import { AES, Utf8 } from "crypto-es";
 import ContentPage from "pages/ContentPage.vue";
 import { useQuasar } from "quasar";
 import MainLayout from "src/layouts/MainLayout.vue";
-import { rightDrawer } from "stores/app";
+import { mainStore } from "stores/app";
 import { mergeDefaults, persistent } from "stores/defaults";
 import { bucket, headBucket, setFileSystemDirectoryHandle } from "stores/io";
-import { toRefs, triggerRef } from "vue";
+import { toRef, toRefs, triggerRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
+const rightDrawer = toRef(mainStore, "rightDrawer");
 const { credentials: defaultCredentials } = toRefs(sharedStore),
   { t } = useI18n();
 

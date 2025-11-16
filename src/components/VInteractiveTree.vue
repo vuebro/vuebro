@@ -58,15 +58,16 @@ import type { QTree } from "quasar";
 
 import { sharedStore } from "@vuebro/shared";
 import { useQuasar } from "quasar";
-import { selected } from "stores/app";
+import { mainStore } from "stores/app";
 import { cancel, immediate, persistent } from "stores/defaults";
 import { deleteObject } from "stores/io";
-import { computed, ref, toRefs, watch } from "vue";
+import { computed, ref, toRef, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { add, addChild, down, left, remove, right, up } = sharedStore,
-  { kvNodes, nodes, tree } = toRefs(sharedStore),
-  { t } = useI18n();
+const selected = toRef(mainStore, "selected");
+const { add, addChild, down, left, remove, right, up } = sharedStore;
+const { kvNodes, nodes, tree } = toRefs(sharedStore);
+const { t } = useI18n();
 
 const $q = useQuasar(),
   /**
@@ -106,9 +107,7 @@ const $q = useQuasar(),
   qtree = ref<QTree>(),
   state = ref(false),
   the = computed(() =>
-    nodes.value.length
-      ? (kvNodes.value[selected.value ?? ""] ?? null)
-      : undefined,
+    nodes.value.length ? (kvNodes.value[selected.value] ?? null) : undefined,
   ),
   title = t("Confirm"),
   value = false,
@@ -208,7 +207,7 @@ watch(
     visible.value = true;
     if (!newVal) {
       const [{ id } = {}] = nodes.value;
-      selected.value = id;
+      selected.value = id ?? "";
     }
     if (oldVal) Reflect.defineProperty(oldVal, "contenteditable", { value });
   },

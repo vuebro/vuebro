@@ -14,7 +14,7 @@ import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
 import { debounce } from "quasar";
-import { domain, manifest, staticEntries, the, urls } from "stores/app";
+import { mainStore } from "stores/app";
 import { cache, deep, second, writable } from "stores/defaults";
 import {
   bucket,
@@ -33,6 +33,8 @@ import { parse } from "vue/compiler-sfc";
 let descriptor: SFCDescriptor | undefined;
 
 const { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore);
+const { domain, the } = toRefs(mainStore);
+const { manifest, staticEntries, urls } = mainStore;
 
 const { data: index } = useFetch(`runtime/index.html`).text();
 
@@ -518,7 +520,7 @@ watch(
   debounce((value, oldValue) => {
     const { imports } = value as TImportmap;
     let save = Boolean(oldValue);
-    staticEntries.forEach(([key = "", value = ""]) => {
+    staticEntries?.forEach(([key = "", value = ""]) => {
       if (imports[key] !== `./${value}`) {
         imports[key] = `./${value}`;
         save = true;

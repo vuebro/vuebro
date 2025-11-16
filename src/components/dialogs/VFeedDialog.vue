@@ -103,15 +103,17 @@ import VLinkDialog from "components/dialogs/VLinkDialog.vue";
 import { consola } from "consola/browser";
 import { parse } from "path-browserify";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
-import { domain } from "stores/app";
+import { mainStore } from "stores/app";
 import { accept, capture, multiple, persistent, reset } from "stores/defaults";
 import { putObject } from "stores/io";
-import { ref, useTemplateRef } from "vue";
+import { ref, toRef, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
 let row: TFeed["items"][0] | undefined;
 
 const { feed } = defineProps<{ feed: TFeed }>();
+
+const domain = toRef(mainStore, "domain");
 
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),

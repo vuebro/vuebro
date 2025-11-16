@@ -70,7 +70,7 @@ import { consola } from "consola/browser";
 import { ofetch as customFetch } from "ofetch";
 import { parse } from "path-browserify";
 import { useQuasar } from "quasar";
-import { urls } from "stores/app";
+import { mainStore } from "stores/app";
 import {
   accept,
   bypassDefined,
@@ -91,7 +91,6 @@ import {
 import { useI18n } from "vue-i18n";
 
 let rootElement: () => Element | undefined;
-
 /**
  * Converts fonts array to an object mapping with underscored keys
  *
@@ -104,7 +103,8 @@ const getFontsObjectFromArray = (fonts: TFonts) =>
     ),
   { files, open } = useFileDialog({ accept, reset }),
   { fonts: Fonts } = toRefs(sharedStore),
-  { t } = useI18n();
+  { t } = useI18n(),
+  { urls } = mainStore;
 
 const $q = useQuasar(),
   blocks = ref(false),

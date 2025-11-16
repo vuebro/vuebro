@@ -38,14 +38,14 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
         template(#body-selection="props")
           q-checkbox(
             v-model="props.selected",
-            :disable="external.includes(props.row.name)",
+            :disable="external?.includes(props.row.name)",
             dense
           )
         template(#body-cell="props")
           q-td(:auto-width="props.col.name === 'name'", :props)
             q-input.min-w-max(
               v-model.trim="props.row[props.col.name]",
-              :disable="external.includes(props.row.name)",
+              :disable="external?.includes(props.row.name)",
               dense,
               :autofocus="props.col.name === 'name'"
             )
@@ -68,15 +68,17 @@ import type { QTableProps } from "quasar";
 
 import json from "assets/importmap.json";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
-import { staticEntries } from "stores/app";
+import { mainStore } from "stores/app";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+
+const { staticEntries } = mainStore;
 
 const { importmap } = defineProps<{
   importmap: { imports: Record<string, string> };
 }>();
 
-const external = staticEntries.map(([name]) => name),
+const external = staticEntries?.map(([name]) => name),
   filter = ref(""),
   { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
@@ -87,8 +89,8 @@ const $q = useQuasar(),
   columns = json as QTableProps["columns"],
   rows = ref(
     [
-      ...staticEntries,
-      ...Object.entries(imports).filter(([name]) => !external.includes(name)),
+      ...(staticEntries ?? []),
+      ...Object.entries(imports).filter(([name]) => !external?.includes(name)),
     ].map(([name = "", path = ""]) => ({
       id: uid(),
       name,

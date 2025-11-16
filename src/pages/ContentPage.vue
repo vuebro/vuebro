@@ -285,7 +285,7 @@ import markedShiki from "marked-shiki";
 import { useQuasar } from "quasar";
 import { createHighlighter } from "shiki";
 import VSourceCode from "src/components/VSourceCode.vue";
-import { rightDrawer, the } from "stores/app";
+import { mainStore } from "stores/app";
 import {
   cancel,
   deep,
@@ -300,6 +300,7 @@ import {
 import { computed, nextTick, ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
+const { rightDrawer, the } = toRefs(mainStore);
 const { importmap, log: defaultLog, nodes, tree } = toRefs(sharedStore);
 
 const $q = useQuasar(),
