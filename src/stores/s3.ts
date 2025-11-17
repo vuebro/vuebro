@@ -19,10 +19,11 @@ let s3Client: S3Client | undefined;
 
 const { credentials: defaults } = sharedStore;
 
-export const credential = useStorage("s3", defaults, localStorage, {
-    mergeDefaults,
-  }),
-  removeEmptyDirectories = undefined,
+const credential = useStorage("s3", defaults, localStorage, {
+  mergeDefaults,
+});
+
+export const removeEmptyDirectories = undefined,
   /**
    * Sets or clears the S3 client instance
    *

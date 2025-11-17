@@ -79,40 +79,49 @@ import {
 } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import {
-  computed,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  ref,
-  toRefs,
-  watch,
-} from "vue";
+import { computed, nextTick, onMounted, onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-let rootElement: () => Element | undefined;
+const props = withDefaults(
+  defineProps<{
+    id?: string | undefined;
+    modelValue?: Promise<string> | string;
+  }>(),
+  {
+    id: "",
+    modelValue: "",
+  },
+);
+
+let blocks = $ref(false),
+  htm = $ref(await props.modelValue),
+  inViewport = $ref(false),
+  rootElement: () => Element | undefined,
+  scrollTarget = $ref<Element>(),
+  show = $ref(false),
+  tagNameClassList = $ref(""),
+  target = $ref<boolean | Element>(false);
 
 const { putObject } = ioStore;
 
-/**
- * Converts fonts array to an object mapping with underscored keys
- *
- * @param fonts - The array of font names to convert
- * @returns An object mapping with underscored keys
- */
-const getFontsObjectFromArray = (fonts: TFonts) =>
+const Fonts = $toRef(sharedStore, "fonts"),
+  /**
+   * Converts fonts array to an object mapping with underscored keys
+   *
+   * @param fonts - The array of font names to convert
+   * @returns An object mapping with underscored keys
+   */
+  getFontsObjectFromArray = (fonts: TFonts) =>
     Object.fromEntries(
       fonts.map((value) => [value.toLowerCase().replace(/ /g, "_"), value]),
     ),
   { files, open } = useFileDialog({ accept, reset }),
-  { fonts: Fonts } = toRefs(sharedStore),
   { t } = useI18n(),
   { urls } = mainStore;
 
 const $q = useQuasar(),
-  blocks = ref(false),
-  editor = ref<QEditor>(),
-  fonts = computed(() => ({
+  editor = $ref<QEditor>(),
+  fonts = $computed(() => ({
     ...getFontsObjectFromArray([
       "Arial",
       "Arial Black",
@@ -123,27 +132,11 @@ const $q = useQuasar(),
       "Times New Roman",
       "Verdana",
     ]),
-    ...getFontsObjectFromArray(Fonts.value),
+    ...getFontsObjectFromArray(Fonts),
   })),
-  props = withDefaults(
-    defineProps<{
-      id?: string | undefined;
-      modelValue?: Promise<string> | string;
-    }>(),
-    {
-      id: "",
-      modelValue: "",
-    },
-  ),
-  htm = ref(await props.modelValue),
-  inViewport = ref(false),
   list = "no-icons",
   placeholder = t("Add some content to your page..."),
-  scrollTarget = ref<Element>(),
-  show = ref(false),
-  srcElement = ref<boolean | Element>(true),
-  tagNameClassList = ref(""),
-  target = ref<boolean | Element>(false),
+  srcElement = $ref<boolean | Element>(true),
   toolbar = computed(() => [
     ["left", "center", "right", "justify"],
     ["bold", "italic", "strike", "underline", "subscript", "superscript"],
@@ -171,7 +164,7 @@ const $q = useQuasar(),
           "defaultFont",
           [
             "default_font",
-            ...Object.keys(fonts.value).sort((a, b) => a.localeCompare(b)),
+            ...Object.keys(fonts).sort((a, b) => a.localeCompare(b)),
           ],
           false,
           true,
@@ -203,9 +196,9 @@ const definitions = {
         "dashboard",
         t("Show Blocks"),
         () => {
-          blocks.value = !blocks.value;
-          if (blocks.value) scrollTarget.value?.classList.add("outline");
-          else scrollTarget.value?.classList.remove("outline");
+          blocks = !blocks;
+          if (blocks) scrollTarget?.classList.add("outline");
+          else scrollTarget?.classList.remove("outline");
         },
       ],
       ["wallpaper", t("Upload Image"), open],
@@ -221,7 +214,7 @@ const definitions = {
               title: t("Internal Links"),
             },
           }).onOk((value: string) => {
-            editor.value?.runCmd("createLink", value);
+            editor?.runCmd("createLink", value);
           });
         },
       ],
@@ -271,7 +264,7 @@ const emit = defineEmits(["update:modelValue"]),
         );
       })().catch(consola.error);
       urls.set(filePath, URL.createObjectURL(file));
-      editor.value?.runCmd(
+      editor?.runCmd(
         "insertHTML",
         `<img src="${urls.get(filePath) ?? ""}" data-src="${filePath}" alt="" decoding="async" loading="lazy" />`,
       );
@@ -294,29 +287,24 @@ const emit = defineEmits(["update:modelValue"]),
    * @param event.target - The element that triggered the event
    */
   onMouseover = ({ currentTarget, target: element }: Event) => {
-    if (
-      blocks.value &&
-      element !== currentTarget &&
-      element instanceof Element
-    ) {
-      const { x = 0, y = 0 } =
-        scrollTarget.value?.getBoundingClientRect() ?? {};
+    if (blocks && element !== currentTarget && element instanceof Element) {
+      const { x = 0, y = 0 } = scrollTarget?.getBoundingClientRect() ?? {};
       const { left, top } = element.getBoundingClientRect();
-      inViewport.value = left > x && top > y;
+      inViewport = left > x && top > y;
       const { classList, tagName } = element;
-      tagNameClassList.value = [
+      tagNameClassList = [
         `<strong>${tagName.toLowerCase()}</strong>`,
         ...classList,
       ].join(".");
-      target.value = element;
-    } else target.value = false;
+      target = element;
+    } else target = false;
   },
   /**
    * Opens the class dialog to edit element classes
    */
   openClassDialog = () => {
-    if (typeof srcElement.value !== "boolean") {
-      const { classList = [] } = srcElement.value;
+    if (typeof srcElement !== "boolean") {
+      const { classList = [] } = srcElement;
       $q.dialog({
         component: VChipsInputDialog,
         componentProps: {
@@ -328,9 +316,9 @@ const emit = defineEmits(["update:modelValue"]),
           value: [...classList],
         },
       }).onOk((className: string[]) => {
-        if (typeof srcElement.value !== "boolean")
-          srcElement.value.className = className.join(" ");
-        emit("update:modelValue", scrollTarget.value?.innerHTML);
+        if (typeof srcElement !== "boolean")
+          srcElement.className = className.join(" ");
+        emit("update:modelValue", scrollTarget?.innerHTML);
       });
     }
   },
@@ -355,23 +343,23 @@ watch(files, (newFiles) => {
   if (newFiles) [...newFiles].forEach(insertImage);
 });
 
-watch(target, async () => {
-  show.value = false;
+watch($$(target), async () => {
+  show = false;
   await nextTick();
-  show.value = true;
+  show = true;
 });
 
 watch(
   () => props.id,
   async () => {
-    htm.value = await props.modelValue;
-    if (scrollTarget.value && scrollTarget.value.innerHTML !== htm.value)
-      scrollTarget.value.innerHTML = htm.value;
+    htm = await props.modelValue;
+    if (scrollTarget && scrollTarget.innerHTML !== htm)
+      scrollTarget.innerHTML = htm;
   },
 );
 
 onMounted(() => {
-  rootElement = editor.value?.getContentEl ?? (() => undefined);
+  rootElement = editor?.getContentEl ?? (() => undefined);
   watch(
     Fonts,
     async (value) => {
@@ -390,15 +378,15 @@ onMounted(() => {
     },
     { immediate },
   );
-  scrollTarget.value = rootElement();
-  scrollTarget.value?.addEventListener("mouseover", onMouseover);
-  scrollTarget.value?.addEventListener("contextmenu", onContextmenu);
-  editor.value?.focus();
+  scrollTarget = rootElement();
+  scrollTarget?.addEventListener("mouseover", onMouseover);
+  scrollTarget?.addEventListener("contextmenu", onContextmenu);
+  editor?.focus();
 });
 
 onUnmounted(() => {
-  scrollTarget.value?.removeEventListener("mouseover", onMouseover);
-  scrollTarget.value?.removeEventListener("contextmenu", onContextmenu);
+  scrollTarget?.removeEventListener("mouseover", onMouseover);
+  scrollTarget?.removeEventListener("contextmenu", onContextmenu);
 });
 </script>
 <style scoped>

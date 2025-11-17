@@ -93,23 +93,21 @@ import MainLayout from "src/layouts/MainLayout.vue";
 import { mergeDefaults, persistent } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toRef, toRefs, triggerRef } from "vue";
+import { toRef, triggerRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 
-const { headBucket, setFileSystemDirectoryHandle } = ioStore;
-const bucket = toRef(ioStore, "bucket");
-
-const rightDrawer = toRef(mainStore, "rightDrawer");
-const { credentials: defaultCredentials } = toRefs(sharedStore),
-  { t } = useI18n();
-
 const $q = useQuasar(),
   APP_VERSION = __APP_VERSION__,
+  bucket = toRef(ioStore, "bucket"),
+  defaultCredentials = toRef(sharedStore, "credentials"),
   credential = useStorage("s3", defaultCredentials, localStorage, {
     mergeDefaults,
   }),
-  router = useRouter();
+  rightDrawer = toRef(mainStore, "rightDrawer"),
+  router = useRouter(),
+  { headBucket, setFileSystemDirectoryHandle } = ioStore,
+  { t } = useI18n();
 
 /**
  * Opens the credentials dialog to add a new S3 account

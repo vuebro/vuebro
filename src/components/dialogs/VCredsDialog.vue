@@ -75,13 +75,19 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
 <script setup lang="ts">
 import type { QInput } from "quasar";
 
+import { sharedStore } from "@vuebro/shared";
+import { useStorage } from "@vueuse/core";
 import endpoints from "assets/endpoints.json";
 import regions from "assets/regions.json";
 import { AES, Utf8 } from "crypto-es";
 import { useDialogPluginComponent, useQuasar } from "quasar";
-import { configurable, enumerable, writable } from "stores/defaults";
-import { credential } from "stores/s3";
-import { ref, triggerRef, useTemplateRef } from "vue";
+import {
+  configurable,
+  enumerable,
+  mergeDefaults,
+  writable,
+} from "stores/defaults";
+import { ref, toRef, triggerRef, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { model = undefined, pin = undefined } = defineProps<{
@@ -89,7 +95,11 @@ const { model = undefined, pin = undefined } = defineProps<{
   pin?: string;
 }>();
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const defaultCredentials = toRef(sharedStore, "credentials"),
+  credential = useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
+  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { t } = useI18n();
 

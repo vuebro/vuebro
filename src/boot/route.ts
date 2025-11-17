@@ -3,11 +3,8 @@ import { sharedStore } from "@vuebro/shared";
 import routes from "src/router/routes";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toRef } from "vue";
 
-const bucket = toRef(ioStore, "bucket"),
-  selected = toRef(mainStore, "selected"),
-  tree = $toRef(sharedStore, "tree");
+const tree = $toRef(sharedStore, "tree");
 
 export default defineBoot(({ router }) => {
   const [route] = routes;
@@ -15,8 +12,8 @@ export default defineBoot(({ router }) => {
     if (["/", "/main"].includes(path)) next();
     else next("/");
     if (path === "/" && route) {
-      bucket.value = "";
-      selected.value = "";
+      ioStore.bucket = "";
+      mainStore.selected = "";
       tree.length = 0;
       router.clearRoutes();
       router.addRoute(route);

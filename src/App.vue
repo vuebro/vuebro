@@ -18,11 +18,17 @@ import { cache, deep, second, writable } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toXML } from "to-xml";
-import { computed, toRef, toRefs, watch } from "vue";
+import { toRef, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
-let descriptor: SFCDescriptor | undefined;
+let descriptor: SFCDescriptor | undefined,
+  domain = $toRef(mainStore, "domain"),
+  { fonts, tree } = $(toRefs(sharedStore));
+
+const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
+const { selected } = $(toRefs(mainStore));
+const { data: index } = $(useFetch(`runtime/index.html`).text());
 
 const bucket = toRef(ioStore, "bucket"),
   {
@@ -33,27 +39,23 @@ const bucket = toRef(ioStore, "bucket"),
     putObject,
     removeEmptyDirectories,
   } = ioStore,
-  { domain, the } = toRefs(mainStore),
-  { feed, fonts, importmap, kvNodes, nodes, tree } = toRefs(sharedStore),
   { manifest, staticEntries, urls } = mainStore;
 
-const { data: index } = useFetch(`runtime/index.html`).text();
-
-const body = computed(() =>
-    index.value
+const body = $computed(() =>
+    index
       ?.replace(
         '<base href="" />',
         `<base href="" />
     <script type="importmap">
-${JSON.stringify(importmap.value, null, 1)}
+${JSON.stringify(importmap, null, 1)}
     <\\/script>
-    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
-    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
-    <link rel="alternate" title="${nodes.value[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
+    <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
+    <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
+    <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
       )
       .replace(
         "</head>",
-        `  ${Object.values(importmap.value.imports)
+        `  ${Object.values(importmap.imports)
           .filter((href) => !href.endsWith("/"))
           .map(
             (href) => `<link rel="modulepreload" crossorigin href="${href}">`,
@@ -119,8 +121,8 @@ const putPage = async ({
     value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
   }
   const canonical =
-      domain.value && `https://${domain.value}${to === "/" ? "" : (to ?? "")}`,
-    htm = body.value
+      domain && `https://${domain}${to === "/" ? "" : (to ?? "")}`,
+    htm = body
       ?.replace(
         '<base href="" />',
         `<base href="${
@@ -150,9 +152,9 @@ const putPage = async ({
       [description ?? "", "description"],
       [title, "title"],
       [type ?? "", "type"],
-      ...(domain.value
+      ...(domain
         ? images.flatMap(({ alt, url }) => [
-            [url ? `https://${domain.value}/${url}` : "", "image"],
+            [url ? `https://${domain}/${url}` : "", "image"],
             [alt ?? "", "image:alt"],
           ])
         : []),
@@ -213,8 +215,8 @@ const getModel = async (
       putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
         consola.error,
       );
-      if (language === "json" && kvNodes.value[id])
-        void putPage(kvNodes.value[id] as TAppPage);
+      if (language === "json" && kvNodes[id])
+        void putPage(kvNodes[id] as TAppPage);
     }
   };
   if (!model) {
@@ -436,12 +438,11 @@ const clearImages = (
         { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
         { items } = JSON.parse(getFeed ?? "{}") as TFeed;
 
-      tree.value.push(JSON.parse(getIndex ?? "[{}]")[0] ?? {});
-      fonts.value.length = 0;
-      fonts.value.push(...JSON.parse(getFonts ?? "[]"));
-      importmap.value.imports = imports;
-      feed.value.items = items;
-      domain.value = cname.trim();
+      tree = JSON.parse(getIndex ?? "[{}]");
+      fonts = JSON.parse(getFonts ?? "[]");
+      importmap.imports = imports;
+      feed.items = items;
+      domain = cname.trim();
       if (localManifest && serverManifest) {
         (
           await Promise.allSettled(files.map((file) => headObject(file, cache)))
@@ -470,7 +471,7 @@ const clearImages = (
           });
       }
     } else {
-      tree.value.length = 0;
+      tree.length = 0;
 
       editor.getModels().forEach((model) => {
         model.dispose();
@@ -487,16 +488,16 @@ const clearImages = (
 /*                                 Смотрители                                 */
 /* -------------------------------------------------------------------------- */
 
-watch(the, clearImages, { deep });
-watch(nodes, defineProperties);
+watch(() => kvNodes[selected] as TAppPage | undefined, clearImages, { deep });
+watch($$(nodes), defineProperties);
 watch(bucket, init);
 
-watch(domain, (cname) => {
+watch($$(domain), (cname) => {
   putObject("CNAME", cname, "text/plain").catch(consola.error);
 });
 
 watch(
-  tree,
+  $$(tree),
   debounce((value) => {
     if (value)
       putObject("index.json", JSON.stringify(value), "application/json").catch(
@@ -507,7 +508,7 @@ watch(
 );
 
 watch(
-  fonts,
+  $$(fonts),
   debounce((value, oldValue) => {
     if (oldValue)
       putObject("fonts.json", JSON.stringify(value), "application/json").catch(
@@ -517,7 +518,7 @@ watch(
 );
 
 watch(
-  importmap,
+  $$(importmap),
   debounce((value, oldValue) => {
     const { imports } = value as TImportmap;
     let save = Boolean(oldValue);
@@ -538,7 +539,7 @@ watch(
 );
 
 watch(
-  [nodes, feed, domain],
+  [$$(nodes), $$(feed), $$(domain)],
   debounce((arr) => {
     const [page, value, tld] = arr as [TPage[], TFeed, string],
       [{ title } = {}] = page,
@@ -576,7 +577,7 @@ watch(
 );
 
 watch(
-  [nodes, domain],
+  [$$(nodes), $$(domain)],
   debounce((arr) => {
     const [page, cname] = arr as [TPage[], string];
     if (cname) {
@@ -614,7 +615,7 @@ watch(
 );
 
 watch(
-  [nodes, importmap, domain],
+  [$$(nodes), $$(importmap), $$(domain)],
   debounce(async ([page]: [TPage[], TImportmap, string]) => {
     const promises: Promise<void>[] = [];
     oldPages.forEach(({ loc, path }) => {

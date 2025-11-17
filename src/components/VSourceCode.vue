@@ -21,10 +21,11 @@ const { apiKey, model, technologies } = defineProps<{
   technologies: string[];
 }>();
 
+const monacoRef = $(useTemplateRef<HTMLElement>("monacoRef"));
+
 const ambiguousCharacters = false,
   automaticLayout = true,
   fixedOverflowWidgets = true,
-  monacoRef = useTemplateRef<HTMLElement>("monacoRef"),
   scrollBeyondLastLine = false,
   unicodeHighlight = { ambiguousCharacters },
   { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
@@ -38,8 +39,8 @@ watch(
 
 onMounted(async () => {
   editor =
-    monacoRef.value &&
-    monaco.editor.create(monacoRef.value, {
+    monacoRef &&
+    monaco.editor.create(monacoRef, {
       automaticLayout,
       fixedOverflowWidgets,
       model: await model,
