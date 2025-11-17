@@ -2,15 +2,13 @@
   "editor.bracketPairColorization.enabled": true,
   "editor.guides.bracketPairs": true,
   "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": ["source.fixAll.eslint"],
   "eslint.validate": ["javascript", "javascriptreact", "typescript", "vue"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
   "typescript.tsdk": "node_modules/typescript/lib",
-  "cSpell.language": "en,ru",
+  "terminal.integrated.enablePersistentSessions": false,
   "git.followTagsWhenSync": true,
-  "[vue]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
+  "cSpell.language": "en,ru",
   "Codegeex.RepoIndex": true,
   "Codegeex.CommitMessage.LanguagePreference": "English",
   "Codegeex.Chat.LanguagePreference": "English",

@@ -6,6 +6,7 @@
     "dbaeumer.vscode-eslint",
     "editorconfig.editorconfig",
     "esbenp.prettier-vscode",
+    "github.vscode-github-actions",
     "l13rary.l13-projects",
     "pflannery.vscode-versionlens",
     "qwenlm.qwen-code-vscode-ide-companion",
