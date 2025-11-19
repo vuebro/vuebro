@@ -54,5 +54,5 @@ const kvNodes = $toRef(sharedStore, "kvNodes"),
 
 const selected = $ref(tree[0]?.id);
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

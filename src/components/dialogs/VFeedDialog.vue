@@ -222,5 +222,5 @@ onChange((files) => {
   }
 });
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

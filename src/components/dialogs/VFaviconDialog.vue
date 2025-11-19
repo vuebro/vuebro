@@ -54,5 +54,5 @@ const factory = async (files: readonly File[]) => {
   return Promise.reject(new Error());
 };
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

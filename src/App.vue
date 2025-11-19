@@ -21,10 +21,12 @@ import { toXML } from "to-xml";
 import { toRef, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
+// eslint-disable-next-line import-x/no-unresolved
+import "virtual:uno.css";
 
 let descriptor: SFCDescriptor | undefined,
-  domain = $toRef(mainStore, "domain");
-let { fonts, tree } = $(toRefs(sharedStore));
+  domain = $toRef(mainStore, "domain"),
+  tree = $toRef(sharedStore, "tree");
 
 const { data: index } = $(useFetch(`runtime/index.html`).text());
 const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
@@ -39,7 +41,7 @@ const bucket = toRef(ioStore, "bucket"),
     putObject,
     removeEmptyDirectories,
   } = ioStore,
-  { manifest, staticEntries, urls } = mainStore;
+  { manifest, urls } = mainStore;
 
 const body = $computed(() =>
     index
@@ -439,7 +441,7 @@ const clearImages = (
         { items } = JSON.parse(getFeed ?? "{}") as TFeed;
 
       tree = JSON.parse(getIndex ?? "[{}]");
-      fonts = JSON.parse(getFonts ?? "[]");
+      sharedStore.fonts = JSON.parse(getFonts ?? "[]");
       importmap.imports = imports;
       feed.items = items;
       domain = cname.trim();
@@ -492,10 +494,6 @@ watch(() => kvNodes[selected] as TAppPage | undefined, clearImages, { deep });
 watch($$(nodes), defineProperties);
 watch(bucket, init);
 
-watch($$(domain), (cname) => {
-  putObject("CNAME", cname, "text/plain").catch(consola.error);
-});
-
 watch(
   $$(tree),
   debounce((value) => {
@@ -504,37 +502,6 @@ watch(
         consola.error,
       );
   }, second),
-  { deep },
-);
-
-watch(
-  $$(fonts),
-  debounce((value, oldValue) => {
-    if (oldValue)
-      putObject("fonts.json", JSON.stringify(value), "application/json").catch(
-        consola.error,
-      );
-  }),
-);
-
-watch(
-  $$(importmap),
-  debounce((value, oldValue) => {
-    const { imports } = value as TImportmap;
-    let save = Boolean(oldValue);
-    staticEntries?.forEach(([key = "", value = ""]) => {
-      if (imports[key] !== `./${value}`) {
-        imports[key] = `./${value}`;
-        save = true;
-      }
-    });
-    if (save)
-      putObject(
-        "index.importmap",
-        JSON.stringify({ imports }),
-        "application/importmap+json",
-      ).catch(consola.error);
-  }),
   { deep },
 );
 

@@ -93,5 +93,5 @@ const removeRow = () => {
     });
 };
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

@@ -175,5 +175,5 @@ const click = (value: Record<string, null | string>) => {
    */
   getRegions = (value: null | string) => regions[(value ?? "") as keyof object];
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

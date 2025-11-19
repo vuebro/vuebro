@@ -38,14 +38,14 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
         template(#body-selection="props")
           q-checkbox(
             v-model="props.selected",
-            :disable="external?.includes(props.row.name)",
+            :disable="Object.keys(staticEntries).includes(props.row.name)",
             dense
           )
         template(#body-cell="props")
           q-td(:auto-width="props.col.name === 'name'", :props)
             q-input.min-w-max(
               v-model.trim="props.row[props.col.name]",
-              :disable="external?.includes(props.row.name)",
+              :disable="Object.keys(staticEntries).includes(props.row.name)",
               dense,
               :autofocus="props.col.name === 'name'"
             )
@@ -68,19 +68,16 @@ import type { QTableProps } from "quasar";
 
 import json from "assets/importmap.json";
 import { uid, useDialogPluginComponent, useQuasar } from "quasar";
-import { mainStore } from "stores/main";
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { staticEntries } = mainStore;
-
-const { importmap } = defineProps<{
+const { importmap, staticEntries } = defineProps<{
   importmap: { imports: Record<string, string> };
+  staticEntries: Record<string, string>;
 }>();
 
 const $q = useQuasar(),
   columns = json as QTableProps["columns"],
-  external = staticEntries?.map(([name]) => name),
   filter = ref(""),
   selected = $ref<Record<string, string>[]>([]),
   { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
@@ -90,8 +87,10 @@ const $q = useQuasar(),
 
 let rows = $ref(
   [
-    ...(staticEntries ?? []),
-    ...Object.entries(imports).filter(([name]) => !external?.includes(name)),
+    ...Object.entries(staticEntries),
+    ...Object.entries(imports).filter(
+      ([name]) => !Object.keys(staticEntries).includes(name),
+    ),
   ].map(([name = "", path = ""]) => ({
     id: uid(),
     name,
@@ -115,5 +114,5 @@ const removeRow = () => {
     });
 };
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>

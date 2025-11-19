@@ -39,5 +39,5 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
 
 const value = defineModel<string[]>("value");
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 </script>
