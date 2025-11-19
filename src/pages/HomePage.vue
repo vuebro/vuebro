@@ -99,15 +99,17 @@ import { useRouter } from "vue-router";
 
 const $q = useQuasar(),
   APP_VERSION = __APP_VERSION__,
-  bucket = toRef(ioStore, "bucket"),
   defaultCredentials = toRef(sharedStore, "credentials"),
-  credential = useStorage("s3", defaultCredentials, localStorage, {
-    mergeDefaults,
-  }),
   rightDrawer = toRef(mainStore, "rightDrawer"),
   router = useRouter(),
   { headBucket, setFileSystemDirectoryHandle } = ioStore,
   { t } = useI18n();
+
+const credential = $(
+  useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
+);
 
 /**
  * Opens the credentials dialog to add a new S3 account
@@ -123,7 +125,7 @@ const add = () => {
   directLogin = (bucketValue: string) => {
     const name = "main",
       path = `/${name}`;
-    bucket.value = bucketValue;
+    ioStore.bucket = bucketValue;
     router.addRoute({
       children: [{ component: ContentPage, name, path: "" }],
       component: MainLayout,
@@ -164,10 +166,10 @@ const add = () => {
    */
   getPin = async (name: string): Promise<string | undefined> =>
     new Promise((resolve, reject) => {
-      if (name !== credential.value[name]?.Bucket) {
+      if (name !== credential[name]?.Bucket) {
         $q.dialog({
           component: VOtpDialog,
-          componentProps: { model: credential.value[name]?.Bucket },
+          componentProps: { model: credential[name]?.Bucket },
         })
           .onOk((payload: string) => {
             resolve(payload);
@@ -193,12 +195,12 @@ const add = () => {
       component: VOtpDialog,
       componentProps: {
         model:
-          name === credential.value[name]?.Bucket
+          name === credential[name]?.Bucket
             ? undefined
-            : credential.value[name]?.Bucket,
+            : credential[name]?.Bucket,
       },
     }).onOk((payload: string) => {
-      const cred = credential.value[name];
+      const cred = credential[name];
       if (cred)
         if (name === cred.Bucket) {
           Object.keys(cred).forEach((key) => {
@@ -242,8 +244,8 @@ const add = () => {
       message: t("Do you really want to remove an account from the list?"),
       title: t("Confirm"),
     }).onOk(() => {
-      Reflect.deleteProperty(credential.value, name.toString());
-      triggerRef(credential);
+      Reflect.deleteProperty(credential, name.toString());
+      triggerRef($$(credential));
     });
   };
 

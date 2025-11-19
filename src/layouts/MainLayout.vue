@@ -92,15 +92,19 @@ import { mainStore } from "stores/main";
 import { toRef, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { domain, rightDrawer } = toRefs(mainStore);
-const { getObjectText, putObject } = ioStore;
-const bucket = toRef(ioStore, "bucket");
+const sharedRefs = toRefs(sharedStore),
+  { feed, importmap } = $(sharedRefs);
 
 const $q = useQuasar(),
-  ai = useStorage("apiKey", ""),
+  bucket = toRef(ioStore, "bucket"),
   cancel = true,
-  { feed, fonts, importmap } = toRefs(sharedStore),
+  rightDrawer = $toRef(mainStore, "rightDrawer"),
+  { getObjectText, putObject } = ioStore,
   { t } = useI18n();
+
+let ai = $(useStorage("apiKey", "")),
+  domain = $toRef(mainStore, "domain"),
+  { fonts } = $(sharedRefs);
 
 /**
  * Opens a dialog to get and save the Mistral AI API key
@@ -113,12 +117,12 @@ const clickAI = () => {
       persistent,
       prompt: {
         hint: t("paste Mistral API Key only on a trusted computer"),
-        model: ai.value,
+        model: ai,
         type: "password",
       },
       title: "Mistral API Key",
     }).onOk((data: string) => {
-      ai.value = data;
+      ai = data;
     });
   },
   /**
@@ -141,11 +145,11 @@ const clickAI = () => {
           /\b((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}\b/.test(
             val,
           ),
-        model: domain.value,
+        model: domain,
       },
       title: t("Domain"),
     }).onOk((data: string) => {
-      domain.value = data;
+      domain = data;
     });
   },
   /**
@@ -154,9 +158,9 @@ const clickAI = () => {
   clickFeed = () => {
     $q.dialog({
       component: VFeedDialog,
-      componentProps: { feed: feed.value, persistent: true },
+      componentProps: { feed, persistent: true },
     }).onOk((data: TFeed["items"]) => {
-      feed.value.items = data
+      feed.items = data
         .filter(({ title }) => title)
         .map((item) => {
           const { attachments, url, ...rest } = item;
@@ -181,10 +185,9 @@ const clickAI = () => {
   clickFonts = () => {
     $q.dialog({
       component: VFontsDialog,
-      componentProps: { fonts: fonts.value, persistent: true },
+      componentProps: { fonts, persistent: true },
     }).onOk((data: string[]) => {
-      fonts.value.length = 0;
-      fonts.value.push(...data);
+      fonts = data;
     });
   },
   /**
@@ -193,9 +196,9 @@ const clickAI = () => {
   clickImportmap = () => {
     $q.dialog({
       component: VImportmapDialog,
-      componentProps: { importmap: importmap.value, persistent: true },
+      componentProps: { importmap, persistent: true },
     }).onOk((data: Record<string, string>) => {
-      importmap.value.imports = data;
+      importmap.imports = data;
     });
   },
   /**

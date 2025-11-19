@@ -22,13 +22,12 @@ import { ioStore } from "stores/io";
 import { useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { putObject } = ioStore;
-
-const { dialogRef, onDialogHide } = useDialogPluginComponent(),
-  { t } = useI18n();
+const uploader = $(useTemplateRef<QUploader>("uploader"));
 
 const $q = useQuasar(),
-  uploader = useTemplateRef<null | QUploader>("uploader");
+  { dialogRef, onDialogHide } = useDialogPluginComponent(),
+  { putObject } = ioStore,
+  { t } = useI18n();
 
 /**
  * Factory function to handle favicon uploads
@@ -47,7 +46,7 @@ const factory = async (files: readonly File[]) => {
         "image/vnd.microsoft.icon",
       );
     else throw new Error();
-    uploader.value?.reset();
+    uploader?.reset();
   } catch {
     message = t("Favicon upload failed");
   }

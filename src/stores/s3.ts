@@ -19,9 +19,11 @@ let s3Client: S3Client | undefined;
 
 const { credentials: defaults } = sharedStore;
 
-const credential = useStorage("s3", defaults, localStorage, {
-  mergeDefaults,
-});
+const credential = $(
+  useStorage("s3", defaults, localStorage, {
+    mergeDefaults,
+  }),
+);
 
 export const removeEmptyDirectories = undefined,
   /**
@@ -105,7 +107,7 @@ export const deleteObject = async (Bucket: string, Key: string) => {
    */
   headBucket = async (Bucket: string, pin: string | undefined) => {
     let { accessKeyId, endpoint, region, secretAccessKey } =
-      credential.value[Bucket] ?? {};
+      credential[Bucket] ?? {};
     if (pin) {
       accessKeyId = AES.decrypt(accessKeyId ?? "", pin).toString(Utf8);
       endpoint = AES.decrypt(endpoint ?? "", pin).toString(Utf8);

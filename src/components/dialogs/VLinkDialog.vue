@@ -13,7 +13,9 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
         selected-color="primary"
       )
         template(#default-header="prop")
-          .row.items-center(@dblclick="onDialogOK(the?.to)")
+          .row.items-center(
+            @dblclick="onDialogOK(kvNodes[selected ?? '']?.to)"
+          )
             Icon.q-icon.q-tree__icon.q-mr-sm(
               :icon="prop.node.icon || 'mdi:web'"
             )
@@ -25,14 +27,18 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
         flat,
         @click="onDialogCancel"
       )
-      q-btn(color="primary", flat, label="Ok", @click="onDialogOK(the?.to)")
+      q-btn(
+        color="primary",
+        flat,
+        label="Ok",
+        @click="onDialogOK(kvNodes[selected ?? '']?.to)"
+      )
 </template>
 
 <script setup lang="ts">
 import { Icon } from "@iconify/vue";
 import { sharedStore } from "@vuebro/shared";
 import { useDialogPluginComponent } from "quasar";
-import { computed, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { message, title } = defineProps<{
@@ -40,13 +46,13 @@ const { message, title } = defineProps<{
   title: string;
 }>();
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const kvNodes = $toRef(sharedStore, "kvNodes"),
+  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
-  { kvNodes, tree } = toRefs(sharedStore),
+  { tree } = sharedStore,
   { t } = useI18n();
 
-const selected = ref<string | undefined>(tree.value[0]?.id),
-  the = computed(() => kvNodes.value[selected.value ?? ""]);
+const selected = $ref(tree[0]?.id);
 
 defineEmits([...useDialogPluginComponent.emits]);
 </script>

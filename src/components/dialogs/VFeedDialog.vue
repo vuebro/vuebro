@@ -106,18 +106,15 @@ import { uid, useDialogPluginComponent, useQuasar } from "quasar";
 import { accept, capture, multiple, persistent, reset } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { ref, toRef, useTemplateRef } from "vue";
+import { ref, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-let row: TFeed["items"][0] | undefined;
-
 const { feed } = defineProps<{ feed: TFeed }>();
-
-const { putObject } = ioStore;
-
-const domain = toRef(mainStore, "domain");
-
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+const form = $(useTemplateRef<QForm>("form"));
+const $q = useQuasar(),
+  domain = $toRef(mainStore, "domain"),
+  filter = ref(""),
+  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { items } = feed,
   { onChange, open } = useFileDialog({
@@ -126,12 +123,11 @@ const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     multiple,
     reset,
   }),
+  { putObject } = ioStore,
   { t } = useI18n();
 
-const $q = useQuasar(),
-  filter = ref(""),
-  formRef = useTemplateRef<QForm>("form"),
-  rows = ref(
+let row: null | TFeed["items"][0] = null,
+  rows = $ref(
     items
       .map((item) => {
         item.url ||= "";
@@ -144,7 +140,7 @@ const $q = useQuasar(),
       })
       .reverse(),
   ),
-  selected = ref<TFeed["items"]>([]);
+  selected = $ref<TFeed["items"]>([]);
 
 /**
  * Opens a file dialog to add an image attachment to the specified feed item
@@ -169,14 +165,14 @@ const add = (value: TFeed["items"][0]) => {
         title: t("Internal Links"),
       },
     }).onOk((value: string) => {
-      feed.url = `https://${domain.value}${value}`;
+      feed.url = `https://${domain}${value}`;
     });
   },
   /**
    * Validates the form and closes the dialog with the feed items if valid
    */
   clickOk = async () => {
-    if (await formRef.value?.validate()) onDialogOK(rows.value);
+    if (await form?.validate()) onDialogOK(rows);
     else
       $q.notify({
         message: t("Title must be not empty"),
@@ -186,16 +182,16 @@ const add = (value: TFeed["items"][0]) => {
    * Removes the selected row after confirming with the user
    */
   removeRow = () => {
-    if (selected.value.length)
+    if (selected.length)
       $q.dialog({
         cancel: true,
         message: t("Do you really want to delete?"),
         persistent: true,
         title: t("Confirm"),
       }).onOk(() => {
-        const set = new Set(selected.value);
-        rows.value = rows.value.filter((x) => !set.has(x));
-        selected.value = [];
+        const set = new Set(selected);
+        rows = rows.filter((x) => !set.has(x));
+        selected = [];
       });
   };
 
@@ -215,7 +211,7 @@ onChange((files) => {
           );
         })().catch(consola.error);
         if (row.attachments[0])
-          row.attachments[0].url = `https://${domain.value}/${filePath}`;
+          row.attachments[0].url = `https://${domain}/${filePath}`;
       } else
         $q.notify({
           message: t(

@@ -90,16 +90,20 @@ import {
 import { ref, toRef, triggerRef, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { model = undefined, pin = undefined } = defineProps<{
+const { model = "", pin = null } = defineProps<{
   model?: string;
   pin?: string;
 }>();
 
-const defaultCredentials = toRef(sharedStore, "credentials"),
-  credential = useStorage("s3", defaultCredentials, localStorage, {
+const defaultCredentials = toRef(sharedStore, "credentials");
+
+const credential = $(
+  useStorage("s3", defaultCredentials, localStorage, {
     mergeDefaults,
   }),
-  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+);
+
+const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { t } = useI18n();
 
@@ -113,14 +117,15 @@ const decrypt = (value?: string) =>
   pin ? AES.decrypt(value ?? "", pin).toString(Utf8) : (value ?? null);
 
 const $q = useQuasar(),
-  cred = credential.value[model ?? ""],
-  accessKeyId = ref(decrypt(cred?.accessKeyId ?? undefined)),
-  Bucket = ref(decrypt(cred?.Bucket ?? undefined)),
+  accessKeyId = ref(decrypt(credential[model]?.accessKeyId ?? undefined)),
+  Bucket = $ref(decrypt(credential[model]?.Bucket ?? undefined)),
   bucketRef = useTemplateRef<QInput>("bucketRef"),
-  endpoint = ref(decrypt(cred?.endpoint ?? undefined)),
+  endpoint = ref(decrypt(credential[model]?.endpoint ?? undefined)),
   isPwd = ref(true),
-  region = ref(decrypt(cred?.region ?? undefined)),
-  secretAccessKey = ref(decrypt(cred?.secretAccessKey ?? undefined));
+  region = ref(decrypt(credential[model]?.region ?? undefined)),
+  secretAccessKey = ref(
+    decrypt(credential[model]?.secretAccessKey ?? undefined),
+  );
 
 /**
  * Handles the click event when saving credentials
@@ -128,22 +133,22 @@ const $q = useQuasar(),
  * @param value - The credential object to save
  */
 const click = (value: Record<string, null | string>) => {
-    if (Bucket.value)
-      if (model !== Bucket.value && Reflect.has(credential.value, Bucket.value))
+    if (Bucket)
+      if (model !== Bucket && Reflect.has(credential, Bucket))
         $q.dialog({
           message: t("That account already exists"),
           title: t("Confirm"),
         });
       else {
-        if (model && model !== Bucket.value)
-          Reflect.deleteProperty(credential.value, model);
-        Reflect.defineProperty(credential.value, Bucket.value, {
+        if (model && model !== Bucket)
+          Reflect.deleteProperty(credential, model);
+        Reflect.defineProperty(credential, Bucket, {
           configurable,
           enumerable,
           value,
           writable,
         });
-        triggerRef(credential);
+        triggerRef($$(credential));
         onDialogOK();
       }
   },

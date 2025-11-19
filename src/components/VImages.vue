@@ -41,6 +41,7 @@
 <script setup lang="ts">
 import type { TPage } from "@vuebro/shared";
 
+import { sharedStore } from "@vuebro/shared";
 import { useFileDialog } from "@vueuse/core";
 import mimes from "assets/mimes.json";
 import { consola } from "consola/browser";
@@ -62,10 +63,10 @@ import { useI18n } from "vue-i18n";
 let images = $ref([] as TPage["images"]),
   index = 0;
 
-const { getObjectBlob, putObject } = ioStore;
-
 const $q = useQuasar(),
-  the = $toRef(mainStore, "the"),
+  kvNodes = $toRef(sharedStore, "kvNodes"),
+  selected = $toRef(mainStore, "selected"),
+  { getObjectBlob, putObject } = ioStore,
   { onChange, open } = useFileDialog({
     accept,
     capture,
@@ -145,11 +146,11 @@ const add = (i: number) => {
 
 watchEffect(() => {
   if (!images.length) add(-1);
-  if (the) {
-    the.images = images
+  if (kvNodes[selected]) {
+    kvNodes[selected].images = images
       .filter(({ url }) => url)
       .map(({ alt = "", url = "" }) => ({ alt, url }));
-    the.images
+    kvNodes[selected].images
       .filter(({ url = "" }) => !urls.has(url))
       .forEach(({ url = "" }) => {
         (async () => {
@@ -160,7 +161,7 @@ watchEffect(() => {
 });
 
 watch(
-  $$(the),
+  () => kvNodes[selected],
   (value) => {
     if (!value?.images.length) {
       images.length = 0;

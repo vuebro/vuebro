@@ -67,29 +67,29 @@ import { useI18n } from "vue-i18n";
 
 const { fonts } = defineProps<{ fonts: string[] }>();
 
-const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
-    useDialogPluginComponent(),
-  { t } = useI18n();
-
 const $q = useQuasar(),
   columns = json as QTableProps["columns"],
   filter = ref(""),
-  rows = ref(fonts.map((name) => ({ id: uid(), name }))),
-  selected = ref<Record<string, string>[]>([]);
+  selected = $ref<Record<string, string>[]>([]),
+  { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
+    useDialogPluginComponent(),
+  { t } = useI18n();
+
+let rows = $ref(fonts.map((name) => ({ id: uid(), name })));
 
 /**
  * Removes the selected rows after confirming with the user
  */
 const removeRow = () => {
-  if (selected.value.length)
+  if (selected.length)
     $q.dialog({
       cancel: true,
       message: t("Do you really want to delete?"),
       persistent: true,
       title: t("Confirm"),
     }).onOk(() => {
-      const set = new Set(selected.value);
-      rows.value = rows.value.filter((x) => !set.has(x));
+      const set = new Set(selected);
+      rows = rows.filter((x) => !set.has(x));
     });
 };
 

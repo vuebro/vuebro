@@ -262,6 +262,7 @@ import type { TLog } from "@vuebro/shared";
 import type { RemovableRef } from "@vueuse/core";
 import type { ModelMessage } from "ai";
 import type { ValidationRule } from "quasar";
+import type { TAppPage } from "stores/main";
 import type { ComponentPublicInstance } from "vue";
 
 import { createMistral } from "@ai-sdk/mistral";
@@ -300,12 +301,29 @@ import { mainStore } from "stores/main";
 import { computed, nextTick, ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { rightDrawer, the } = toRefs(mainStore);
-const { importmap, log: defaultLog, nodes, tree } = toRefs(sharedStore);
+const sharedRefs = toRefs(sharedStore),
+  { importmap, kvNodes, nodes, tree } = $(sharedRefs);
+const { log: defaultLog } = sharedRefs;
+
+const { rightDrawer, selected } = $(toRefs(mainStore));
+
+const chatMessages = $(
+  useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
+);
+const jsonldRef = $(
+  useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
+);
+const vueRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"));
+
+let apiKey = $(useStorage("apiKey", ""));
+let list = $ref<{ content: string[]; role: string }[]>([]),
+  message = $ref("");
+
+const the = $computed(
+  () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
+);
 
 const $q = useQuasar(),
-  apiKey = useStorage("apiKey", ""),
-  chatMessages = useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
   /**
    * Copies data to the clipboard
    *
@@ -333,7 +351,7 @@ const $q = useQuasar(),
      * @returns The formatted icon value
      */
     get() {
-      return the.value?.icon?.replace(/^mdi:/, "mdi-");
+      return the?.icon?.replace(/^mdi:/, "mdi-");
     },
     /**
      * Sets the icon value, converting MDI- format back to MDI: prefix
@@ -341,13 +359,10 @@ const $q = useQuasar(),
      * @param value - The icon value to set
      */
     set(value: string | undefined) {
-      if (value && the.value) the.value.icon = value.replace(/^mdi-/, "mdi:");
+      if (value && the) the.icon = value.replace(/^mdi-/, "mdi:");
     },
   }),
-  id = computed(() => tree.value[0]?.id ?? ""),
-  jsonldRef = useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
   length = 20,
-  list = ref<{ content: string[]; role: string }[]>([]),
   loc = computed({
     /**
      * Gets the location value
@@ -355,7 +370,7 @@ const $q = useQuasar(),
      * @returns The location value or null if not set
      */
     get() {
-      return the.value?.loc ?? null;
+      return the?.loc ?? null;
     },
     /**
      * Sets the location value, removing leading and trailing slashes
@@ -363,8 +378,7 @@ const $q = useQuasar(),
      * @param value - The location value to set
      */
     set(value: null | string) {
-      if (the.value)
-        the.value.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
+      if (the) the.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
     },
   }),
   markedWithShiki = marked.use(
@@ -383,28 +397,25 @@ const $q = useQuasar(),
         }),
     }),
   ),
-  message = ref(""),
   pagination = ref({ itemsPerPage, page }),
   /**
    * Scrolls to the end of the chat messages container
    */
   scrollToEnd = () => {
     (
-      chatMessages.value?.[chatMessages.value.length - 1]?.$el as
-        | HTMLElement
-        | undefined
+      chatMessages?.[chatMessages.length - 1]?.$el as HTMLElement | undefined
     )?.scrollIntoView();
   },
-  tab = ref("wysiwyg"),
+  tab = $ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
-    ...Object.keys(importmap.value.imports).filter((value) => value !== "vue"),
+    ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
   ]),
-  vueRef = useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"),
   { icons } = mdi as Record<"icons", IconNameArray>,
   { t } = useI18n();
 
 let initialDrawerWidth = 300,
+  drawerWidth = $ref(initialDrawerWidth),
   log: RemovableRef<TLog> | undefined,
   mistral: MistralProvider | undefined;
 
@@ -419,42 +430,45 @@ const clickAI = () => {
       persistent,
       prompt: {
         hint: t("paste Mistral API Key only on a trusted computer"),
-        model: apiKey.value,
+        model: apiKey,
         type: "password",
       },
       title: "Mistral API Key",
     }).onOk((data: string) => {
-      apiKey.value = data;
+      apiKey = data;
     });
   },
-  drawerWidth = ref(initialDrawerWidth),
   /**
    * Initializes the log for the current page
    */
   initLog = () => {
-    log = useStorage(id, defaultLog, localStorage, { mergeDefaults });
-    watch(
-      () => [...(log?.value.messages ?? [])],
-      async (value, oldValue) => {
-        list.value = await Promise.all(
-          value
-            .map(async ({ content, role }) => ({
-              content: await Promise.all(
-                content.map(async ({ text }) =>
-                  dompurify.sanitize(await markedWithShiki.parse(text)),
+    if (tree[0]?.id) {
+      log = useStorage(tree[0].id, defaultLog, localStorage, {
+        mergeDefaults,
+      });
+      watch(
+        () => [...(log?.value.messages ?? [])],
+        async (value, oldValue) => {
+          list = await Promise.all(
+            value
+              .map(async ({ content, role }) => ({
+                content: await Promise.all(
+                  content.map(async ({ text }) =>
+                    dompurify.sanitize(await markedWithShiki.parse(text)),
+                  ),
                 ),
-              ),
-              role,
-            }))
-            .toReversed(),
-        );
-        if (oldValue && value.length > oldValue.length) {
-          await nextTick();
-          scrollToEnd();
-        }
-      },
-      { deep, flush: "post", immediate },
-    );
+                role,
+              }))
+              .toReversed(),
+          );
+          if (oldValue && value.length > oldValue.length) {
+            await nextTick();
+            scrollToEnd();
+          }
+        },
+        { deep, flush: "post", immediate },
+      );
+    }
   },
   /**
    * Handles drawer resize events
@@ -471,9 +485,9 @@ const clickAI = () => {
     isFirst: boolean;
     offset: { x: number };
   }) => {
-    if (isFirst) initialDrawerWidth = drawerWidth.value;
+    if (isFirst) initialDrawerWidth = drawerWidth;
     const width = initialDrawerWidth - x;
-    if (width > 300) drawerWidth.value = width;
+    if (width > 300) drawerWidth = width;
   },
   /**
    * Validation rules for the form inputs
@@ -487,10 +501,9 @@ const clickAI = () => {
      */
     (v) =>
       !v ||
-      !nodes.value.find(
+      !nodes.find(
         (element) =>
-          element.path === v ||
-          (element.id !== the.value?.id && element.loc === v),
+          element.path === v || (element.id !== the?.id && element.loc === v),
       ) ||
       t("That name is already in use"),
     /**
@@ -504,11 +517,11 @@ const clickAI = () => {
       t("Prohibited characters are used"),
   ];
 
-if (id.value) initLog();
-else watch(id, initLog, { once });
+if (tree[0]?.id) initLog();
+else watch(() => tree[0]?.id, initLog, { once });
 
 watch(
-  apiKey,
+  $$(apiKey),
   (value) => {
     mistral = value ? createMistral({ apiKey: value }) : undefined;
   },
@@ -519,21 +532,21 @@ watch(
  * Sends a message to the AI assistant
  */
 const send = async () => {
-  if (mistral && log && message.value) {
-    const content = [{ text: message.value, type: "text" }],
+  if (mistral && log && message) {
+    const content = [{ text: message, type: "text" }],
       { messages, system } = log.value;
-    if (tab.value === "vue" && vueRef.value) {
-      const text = ((await vueRef.value.getSelection()) ?? "") as string;
+    if (tab === "vue" && vueRef) {
+      const text = ((await vueRef.getSelection()) ?? "") as string;
       if (text)
         content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
     }
-    if (tab.value === "jsonld" && jsonldRef.value) {
-      const text = ((await jsonldRef.value.getSelection()) ?? "") as string;
+    if (tab === "jsonld" && jsonldRef) {
+      const text = ((await jsonldRef.getSelection()) ?? "") as string;
       if (text)
         content.unshift({ text: `\`\`\`json\n${text}\n\`\`\``, type: "text" });
     }
     messages.unshift({ content, role: "user" });
-    message.value = "";
+    message = "";
     if (messages.length > length) messages.length = length;
     try {
       const { text } = await generateText({

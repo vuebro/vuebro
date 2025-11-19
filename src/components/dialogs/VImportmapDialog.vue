@@ -78,40 +78,40 @@ const { importmap } = defineProps<{
   importmap: { imports: Record<string, string> };
 }>();
 
-const external = staticEntries?.map(([name]) => name),
+const $q = useQuasar(),
+  columns = json as QTableProps["columns"],
+  external = staticEntries?.map(([name]) => name),
   filter = ref(""),
+  selected = $ref<Record<string, string>[]>([]),
   { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { imports } = importmap,
   { t } = useI18n();
 
-const $q = useQuasar(),
-  columns = json as QTableProps["columns"],
-  rows = ref(
-    [
-      ...(staticEntries ?? []),
-      ...Object.entries(imports).filter(([name]) => !external?.includes(name)),
-    ].map(([name = "", path = ""]) => ({
-      id: uid(),
-      name,
-      path,
-    })),
-  ),
-  selected = ref<Record<string, string>[]>([]);
+let rows = $ref(
+  [
+    ...(staticEntries ?? []),
+    ...Object.entries(imports).filter(([name]) => !external?.includes(name)),
+  ].map(([name = "", path = ""]) => ({
+    id: uid(),
+    name,
+    path,
+  })),
+);
 
 /**
  * Removes the selected rows after confirming with the user
  */
 const removeRow = () => {
-  if (selected.value.length)
+  if (selected.length)
     $q.dialog({
       cancel: true,
       message: t("Do you really want to delete?"),
       persistent: true,
       title: t("Confirm"),
     }).onOk(() => {
-      const set = new Set(selected.value);
-      rows.value = rows.value.filter((x) => !set.has(x));
+      const set = new Set(selected);
+      rows = rows.filter((x) => !set.has(x));
     });
 };
 

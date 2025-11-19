@@ -22,15 +22,15 @@ import { toRef, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
 
-let descriptor: SFCDescriptor | undefined;
-let { domain } = $(toRefs(mainStore));
+let descriptor: SFCDescriptor | undefined,
+  domain = $toRef(mainStore, "domain");
 let { fonts, tree } = $(toRefs(sharedStore));
 
 const { data: index } = $(useFetch(`runtime/index.html`).text());
 const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
-const { selected } = $(toRefs(mainStore));
 
 const bucket = toRef(ioStore, "bucket"),
+  selected = $toRef(mainStore, "selected"),
   {
     deleteObject,
     getObjectBlob,

@@ -31,17 +31,18 @@ import type { ComponentPublicInstance } from "vue";
 
 import { AES } from "crypto-es";
 import { useDialogPluginComponent } from "quasar";
-import { computed, ref, watch } from "vue";
+import { computed, watch } from "vue";
 
 const { model } = defineProps<{ model: string }>();
 
-const error = ref(false),
-  fields = ref<QInput[]>([]),
-  fieldValues = ref<number[]>([]),
-  length = ref(4),
-  payload = computed(() => fieldValues.value.filter(Boolean).join("")),
-  selected = ref(0),
+const fields = $ref<QInput[]>([]),
+  fieldValues = $ref<number[]>([]),
+  length = 4,
+  payload = computed(() => fieldValues.filter(Boolean).join("")),
   { dialogRef, onDialogHide, onDialogOK } = useDialogPluginComponent();
+
+let error = $ref(false),
+  selected = $ref(0);
 
 /**
  * Focuses on the field at the given index
@@ -49,7 +50,7 @@ const error = ref(false),
  * @param index - The index of the field to focus on
  */
 const focus = (index: number) => {
-    if (index >= 0 && index < length.value) selected.value = index;
+    if (index >= 0 && index < length) selected = index;
   },
   /**
    * Updates the reference to a field element at a specific index
@@ -61,23 +62,23 @@ const focus = (index: number) => {
     element: ComponentPublicInstance | Element | null,
     index: number,
   ) => {
-    fields.value[index] = element as QInput;
+    fields[index] = element as QInput;
   };
 
-defineEmits([...useDialogPluginComponent.emits]);
+defineEmits(useDialogPluginComponent.emits);
 
 watch(
   payload,
   (value) => {
-    if (value.length === length.value) {
-      if (model) error.value = !AES.decrypt(model, value).toString();
-      if (!error.value) onDialogOK(value);
-    } else error.value = false;
+    if (value.length === length) {
+      if (model) error = !AES.decrypt(model, value).toString();
+      if (!error) onDialogOK(value);
+    } else error = false;
   },
   { deep: true },
 );
 
 watch(selected, (value) => {
-  fields.value[value]?.select();
+  fields[value]?.select();
 });
 </script>
