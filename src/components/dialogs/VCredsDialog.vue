@@ -5,26 +5,26 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
       q-input(
         ref="bucketRef",
         v-model.trim="Bucket",
-        :rules="[(v: null | string) => !!v || t('Item is required')]",
         clearable,
-        label="bucket"
+        label="bucket",
+        :rules="[(v: null | string) => !!v || t('Item is required')]"
       )
         template(#prepend)
           q-icon(name="delete")
       q-input(
         v-model.trim="accessKeyId",
         clearable,
-        label="access key id",
-        hint=""
+        hint="",
+        label="access key id"
       )
         template(#prepend)
           q-icon(name="key")
       q-input(
         v-model.trim="secretAccessKey",
-        :type="isPwd ? 'password' : 'text'",
         clearable,
+        hint="",
         label="secret access key",
-        hint=""
+        :type="isPwd ? 'password' : 'text'"
       )
         template(#prepend)
           q-icon(name="lock")
@@ -35,13 +35,13 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
           )
       q-select(
         v-model.trim="endpoint",
-        :options="endpoints",
         clearable,
         emit-value,
         fill-input,
         hide-selected,
         hint="",
         label="endpoint url",
+        :options="endpoints",
         type="url",
         use-input,
         @input-value="(value: string) => { endpoint = value; }"
@@ -50,13 +50,13 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
           q-icon(name="link")
       q-select(
         v-model.trim="region",
-        :options="getRegions(endpoint)",
         clearable,
         emit-value,
         fill-input,
         hide-selected,
         hint="",
         label="region",
+        :options="getRegions(endpoint)",
         use-input,
         @input-value="(value: string) => { region = value; }"
       )

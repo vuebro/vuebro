@@ -7,18 +7,18 @@
     q-card(bordered, flat)
       q-card-section(horizontal)
         q-img.col(
+          fit="cover",
           :ratio="16 / 9",
-          :src="urls.get(image.url ?? '')",
-          fit="cover"
+          :src="urls.get(image.url ?? '')"
         )
           .absolute-bottom
             q-input(v-model="image.alt", dark, dense)
         q-card-actions.q-px-md.justify-around(vertical)
           q-btn(
+            :disable="!image.url",
             flat,
             icon="content_paste",
             round,
-            :disable="!image.url",
             @click="copy(i)"
           )
             q-tooltip.bg-primary(

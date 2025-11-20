@@ -21,10 +21,10 @@ q-drawer(
       q-tab-panel.column.no-padding(name="seo")
         q-list.fit(v-if="tree && the")
           q-expansion-item(
-            :label="t('Content Tree')",
             default-opened,
             header-class="text-primary",
-            icon="account_tree"
+            icon="account_tree",
+            :label="t('Content Tree')"
           )
             v-interactive-tree
           q-separator
@@ -62,30 +62,30 @@ q-drawer(
             q-card-section
               q-select(
                 v-model="the.type",
-                :label="t('The type of media of your content')",
-                :options="types",
                 clearable,
-                hint="type"
+                hint="type",
+                :label="t('The type of media of your content')",
+                :options="types"
               )
               q-input(
                 v-model.trim="the.header",
-                :label="t('Page Header')",
+                clearable,
                 hint="header",
-                clearable
+                :label="t('Page Header')"
               )
               q-input(
                 v-model.trim="the.description",
-                :label="t('Page Description')",
                 autogrow,
+                clearable,
                 hint="description",
-                type="textarea",
-                clearable
+                :label="t('Page Description')",
+                type="textarea"
               )
               q-select(
                 v-model.trim="the.keywords",
-                :label="t('Keywords')",
                 hide-dropdown-icon,
                 hint="keywords",
+                :label="t('Keywords')",
                 multiple,
                 new-value-mode="add",
                 stack-label,
@@ -94,24 +94,24 @@ q-drawer(
               )
               q-input(
                 v-model.trim="loc",
-                :rules,
-                :label="t('Permanent Link')",
+                clearable,
                 hint="loc",
+                :label="t('Permanent Link')",
                 prefix="/",
-                type="url",
-                clearable
+                :rules,
+                type="url"
               )
               q-select(
                 v-model="the.changefreq",
-                :label="t('Change Frequency')",
-                :options="changefreq",
                 clearable,
-                hint="changefreq"
+                hint="changefreq",
+                :label="t('Change Frequency')",
+                :options="changefreq"
               )
               q-input(
                 v-model.number="the.priority",
-                :label="t('Priority')",
                 hint="priority",
+                :label="t('Priority')",
                 max="1",
                 min="0",
                 step="0.1",
@@ -119,16 +119,16 @@ q-drawer(
               )
               q-input(
                 v-model="the.lastmod",
-                :label="t('Last Modification')",
                 clearable,
                 hint="lastmod",
+                :label="t('Last Modification')",
                 type="datetime-local"
               )
               q-input(
                 v-model.trim="the.icon",
-                :label="t('Icon')",
                 clearable,
-                hint="icon"
+                hint="icon",
+                :label="t('Icon')"
               )
                 template(#prepend)
                   Icon.q-icon.cursor-pointer(
@@ -137,16 +137,16 @@ q-drawer(
                   q-popup-proxy.column.items-center.justify-center
                     q-input.q-ma-md(
                       v-model="filter",
-                      :label="t('Search...')",
                       clearable,
-                      dense
+                      dense,
+                      :label="t('Search...')"
                     )
                     q-icon-picker(
                       v-model="icon",
                       v-model:model-pagination="pagination",
+                      dense,
                       :filter,
                       :icons,
-                      dense,
                       tooltips
                     )
       q-tab-panel.column.no-padding.justify-center(name="ai")
@@ -163,26 +163,26 @@ q-drawer(
                 .prose.text-xs.select-text(v-html="msg")
                 q-btn(
                   flat,
-                  round,
                   icon="content_copy",
+                  round,
                   size="xs",
                   @click="clipboard(msg)"
                 )
                 q-btn(
                   flat,
-                  round,
                   icon="delete",
+                  round,
                   size="xs",
                   @click="content.length < 2 ? log.messages.splice(log.messages.length - i - 1, 1) : log.messages[log.messages.length - i - 1]?.content.splice(j, 1)"
                 )
           q-input.q-ma-sm(
             v-model="message",
-            :label="t('How can I help you today?')",
-            autogrow,
-            dense,
             autofocus,
+            autogrow,
             class="max-h-1/3",
+            dense,
             input-class="max-h-full",
+            :label="t('How can I help you today?')",
             @keyup.ctrl.enter="send"
           )
             template(#prepend)
@@ -191,25 +191,25 @@ q-drawer(
                 q-popup-edit(
                   v-slot="scope",
                   v-model="log.system",
-                  buttons,
-                  anchor="bottom end"
+                  anchor="bottom end",
+                  buttons
                 )
                   q-input(
                     v-model="scope.value",
-                    dense,
                     autofocus,
-                    type="textarea",
-                    :label="t('Describe AI behavior')"
+                    dense,
+                    :label="t('Describe AI behavior')",
+                    type="textarea"
                   )
             template(#after)
-              q-btn(round, dense, flat, icon="send", @click="send")
+              q-btn(dense, flat, icon="send", round, @click="send")
         .self-center.text-center(v-else)
-          q-btn(unelevated, color="primary", label="AI key", @click="clickAI")
+          q-btn(color="primary", label="AI key", unelevated, @click="clickAI")
           .q-mt-md {{ t("You need an AI key to use this feature") }}
   q-separator.bg-separator.absolute-left.-left-px.cursor-ew-resize(
     v-touch-pan.preserveCursor.prevent.mouse.horizontal="resizeDrawer",
-    vertical,
-    class="after:absolute after:top-1/2 after:-right-[5px] after:-left-[5px] after:h-[30px] after:-translate-y-1/2 after:rounded-[4px] after:bg-gray-400 after:pt-[3px] after:text-center after:content-['∷']"
+    class="after:absolute after:top-1/2 after:-right-[5px] after:-left-[5px] after:h-[30px] after:-translate-y-1/2 after:rounded-[4px] after:bg-gray-400 after:pt-[3px] after:text-center after:content-['∷']",
+    vertical
   )
 q-page.column.full-height(v-if="the")
   q-tabs.text-grey(
@@ -234,7 +234,7 @@ q-page.column.full-height(v-if="the")
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-source-code(ref="vueRef", :model="the.sfc", :api-key, :technologies)
+        v-source-code(ref="vueRef", :api-key, :model="the.sfc", :technologies)
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
@@ -242,8 +242,8 @@ q-page.column.full-height(v-if="the")
       Suspense
         v-source-code(
           ref="jsonldRef",
-          :model="the.jsonld",
           :api-key,
+          :model="the.jsonld",
           :technologies="['json-ld']"
         )
           template(#fallback)

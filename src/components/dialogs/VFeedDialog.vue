@@ -1,5 +1,5 @@
 <template lang="pug">
-q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
+q-dialog(ref="dialogRef", full-height, full-width, @hide="onDialogHide")
   q-card.q-dialog-plugin.column
     q-card-section.q-dialog__title {{ t("News") }}
     q-card-section.q-dialog__message JSON Feed: feed.json, ATOM: feed.xml, RSS: feed-rss.xml
@@ -7,13 +7,13 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
       q-form.w-full(ref="form")
         q-table.h-full.w-full(
           v-model:selected="selected",
-          :rows,
-          row-key="id",
-          selection="single",
+          card-container-class="scroll",
           :filter,
           grid,
-          card-container-class="scroll",
-          :rows-per-page-options="[4, 8, 12, 16, 20, 24, 28, 0]"
+          row-key="id",
+          :rows,
+          :rows-per-page-options="[4, 8, 12, 16, 20, 24, 28, 0]",
+          selection="single"
         )
           template(#top-left)
             q-btn-group(outline)
@@ -86,11 +86,11 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
     q-card-actions(align="right")
       q-btn(
         color="primary",
-        :label="t('Cancel')",
         flat,
+        :label="t('Cancel')",
         @click="onDialogCancel"
       )
-      q-btn(color="primary", label="Ok", flat, @click="clickOk")
+      q-btn(color="primary", flat, label="Ok", @click="clickOk")
 </template>
 
 <script setup lang="ts">

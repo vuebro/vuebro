@@ -6,10 +6,10 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
     q-card-section.q-dialog-plugin__form.scroll.col
       q-tree(
         v-model:selected="selected",
-        :nodes="tree",
         default-expand-all,
         no-selection-unset,
         node-key="id",
+        :nodes="tree",
         selected-color="primary"
       )
         template(#default-header="prop")
@@ -23,8 +23,8 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
     q-card-actions(align="right")
       q-btn(
         color="primary",
-        :label="t('Cancel')",
         flat,
+        :label="t('Cancel')",
         @click="onDialogCancel"
       )
       q-btn(

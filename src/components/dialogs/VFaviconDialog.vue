@@ -4,14 +4,14 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
     q-card-section(horizontal)
       q-uploader.min-h-72(
         ref="uploader",
-        :factory,
         accept="image/vnd.microsoft.icon",
+        :factory,
         flat,
         label="Favicon",
         square
       )
     q-card-actions(align="right")
-      q-btn(color="primary", :label="t('Close')", flat, @click="onDialogHide")
+      q-btn(color="primary", flat, :label="t('Close')", @click="onDialogHide")
 </template>
 
 <script setup lang="ts">

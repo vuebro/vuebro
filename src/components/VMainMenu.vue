@@ -1,10 +1,10 @@
 <template lang="pug">
-q-btn(v-if="bucket", stretch, flat, icon="newspaper", @click="clickFeed")
+q-btn(v-if="bucket", flat, icon="newspaper", stretch, @click="clickFeed")
 q-btn-dropdown.q-mr-xs(
   v-if="bucket",
+  auto-close,
   dropdown-icon="apps",
   flat,
-  auto-close,
   square,
   stretch
 )

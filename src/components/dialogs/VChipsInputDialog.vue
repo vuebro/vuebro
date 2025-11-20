@@ -6,13 +6,13 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
     q-card-section.q-dialog-plugin__form
       q-select(
         v-model="value",
+        dense,
         hide-dropdown-icon,
         multiple,
         new-value-mode="add",
         stack-label,
         use-chips,
-        use-input,
-        dense
+        use-input
       )
     q-card-actions(align="right")
       q-btn(

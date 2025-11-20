@@ -1,5 +1,5 @@
 <template lang="pug">
-q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
+q-dialog(ref="dialogRef", full-height, full-width, @hide="onDialogHide")
   q-card.q-dialog-plugin.column
     q-card-section.q-dialog__title Import Map
     q-card-section.q-dialog__message {{ t("The value is a module specifier map, which provides the mappings between module specifier text that might appear in an import statement or import() operator, and the text that will replace it when the specifier is resolved") }}
@@ -7,13 +7,13 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
       q-table.w-full(
         v-model:selected="selected",
         :columns,
-        :rows,
-        :rows-per-page-options="[0]",
         dense,
-        flat,
         :filter,
+        flat,
         hide-bottom,
         row-key="id",
+        :rows,
+        :rows-per-page-options="[0]",
         selection="single",
         separator="none"
       )
@@ -38,28 +38,28 @@ q-dialog(ref="dialogRef", full-width, full-height, @hide="onDialogHide")
         template(#body-selection="props")
           q-checkbox(
             v-model="props.selected",
-            :disable="Object.keys(staticEntries).includes(props.row.name)",
-            dense
+            dense,
+            :disable="Object.keys(staticEntries).includes(props.row.name)"
           )
         template(#body-cell="props")
           q-td(:auto-width="props.col.name === 'name'", :props)
             q-input.min-w-max(
               v-model.trim="props.row[props.col.name]",
-              :disable="Object.keys(staticEntries).includes(props.row.name)",
+              :autofocus="props.col.name === 'name'",
               dense,
-              :autofocus="props.col.name === 'name'"
+              :disable="Object.keys(staticEntries).includes(props.row.name)"
             )
     q-card-actions(align="right")
       q-btn(
         color="primary",
-        :label="t('Cancel')",
         flat,
+        :label="t('Cancel')",
         @click="onDialogCancel"
       )
       q-btn(
         color="primary",
-        label="Ok",
         flat,
+        label="Ok",
         @click="onDialogOK(Object.fromEntries(rows.filter(({ name, path }) => path && name).map(({ name, path }) => [name, path])))"
       )
 </template>

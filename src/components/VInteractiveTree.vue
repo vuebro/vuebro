@@ -1,5 +1,5 @@
 <template lang="pug">
-q-page-sticky(position="bottom-right", :offset="[18, 18]")
+q-page-sticky(:offset="[18, 18]", position="bottom-right")
   Transition(
     appear,
     enter-active-class="animated zoomIn",
@@ -8,9 +8,9 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
     q-fab(
       v-if="visible",
       v-model="state",
-      icon="add",
+      color="accent",
       direction="up",
-      color="accent"
+      icon="add"
     )
       q-fab-action(color="primary", icon="note", @click="clickAdd")
       q-fab-action(color="primary", icon="delete", @click="clickRemove")
@@ -26,10 +26,10 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
   q-tree.q-ma-xs(
     ref="qtree",
     v-model:expanded="expanded",
-    :nodes="tree",
-    :selected,
     no-selection-unset,
-    node-key="id"
+    node-key="id",
+    :nodes="tree",
+    :selected
   )
     template(#default-header="prop")
       .row.no-wrap.full-width.items-center(
@@ -42,12 +42,12 @@ q-page-sticky(position="bottom-right", :offset="[18, 18]")
         q-input.full-width.min-w-96(
           v-model.trim="prop.node.name",
           :bg-color="prop.node.id === selected ? 'primary' : undefined",
+          dense,
           :error="error(prop.node)",
           :error-message="errorMessage(prop.node)",
-          :readonly="!prop.node.contenteditable",
-          dense,
           hide-bottom-space,
           outlined,
+          :readonly="!prop.node.contenteditable",
           @click.stop="selected = prop.node.id",
           @keyup.enter="prop.node.contenteditable = false"
         )

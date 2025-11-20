@@ -7,13 +7,13 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
       q-table.h-full.w-full(
         v-model:selected="selected",
         :columns,
-        :rows,
-        :rows-per-page-options="[0]",
         dense,
-        flat,
         :filter,
+        flat,
         hide-bottom,
         row-key="id",
+        :rows,
+        :rows-per-page-options="[0]",
         selection="multiple",
         separator="none"
       )
@@ -39,20 +39,20 @@ q-dialog(ref="dialogRef", full-height, @hide="onDialogHide")
           q-td(:props)
             q-input.min-w-20(
               v-model.trim="props.row[props.col.name]",
-              dense,
-              autofocus
+              autofocus,
+              dense
             )
     q-card-actions(align="right")
       q-btn(
         color="primary",
-        :label="t('Cancel')",
         flat,
+        :label="t('Cancel')",
         @click="onDialogCancel"
       )
       q-btn(
         color="primary",
-        label="Ok",
         flat,
+        label="Ok",
         @click="onDialogOK(rows.map(({ name }) => name).filter(Boolean))"
       )
 </template>

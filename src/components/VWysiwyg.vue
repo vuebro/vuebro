@@ -8,15 +8,15 @@ form.full-width.col.column(
 )
   q-editor.full-width.col.column(
     ref="editor",
-    paragraph-tag="p",
+    content-class="col prose max-w-none",
     :definitions,
     :dense="$q.screen.lt.md",
+    flat,
     :fonts,
     :model-value="htm",
+    paragraph-tag="p",
     :placeholder,
     :toolbar,
-    content-class="col prose max-w-none",
-    flat,
     @drop="paste",
     @paste="paste",
     @update:model-value="$emit('update:modelValue', $event)"
@@ -24,18 +24,18 @@ form.full-width.col.column(
   q-tooltip.text-caption.bg-primary(
     v-if="blocks && inViewport",
     v-model="show",
-    :target,
     anchor="top left",
-    self="top left",
     :scroll-target,
+    self="top left",
+    :target,
     v-html="tagNameClassList"
   )
   q-menu(
     v-if="blocks",
-    touch-position,
     context-menu,
-    :target="scrollTarget",
     :scroll-target,
+    :target="scrollTarget",
+    touch-position,
     @show="srcElement = target"
   )
     q-list(dense)

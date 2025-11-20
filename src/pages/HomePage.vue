@@ -11,7 +11,7 @@ q-drawer(v-model="rightDrawer", bordered, show-if-above, side="right")
     .full-width.q-pt-lg.q-px-lg.q-pb-sm(
       v-if="$q.platform.is.electron || isFileSystemAccess()"
     )
-      q-btn.fit(:label="t('Open...')", push, color="primary", @click="getDir")
+      q-btn.fit(color="primary", :label="t('Open...')", push, @click="getDir")
     q-list(padding)
       q-item(
         v-for="[name, cred] in Object.entries(credential).sort()",
@@ -22,13 +22,13 @@ q-drawer(v-model="rightDrawer", bordered, show-if-above, side="right")
       )
         q-item-section(avatar)
           q-btn(
-            :icon="name === cred.Bucket ? 'lock_open' : 'lock'",
             flat,
+            :icon="name === cred.Bucket ? 'lock_open' : 'lock'",
             padding="sm",
             @click="(evt: Event) => { evt.stopPropagation(); lock(name.toString()); }"
           )
         q-item-section
-          q-item-label.rtl(overline, lines="1")
+          q-item-label.rtl(lines="1", overline)
             span.plaintext {{ name }}
         q-item-section(side)
           .q-gutter-xs
@@ -56,21 +56,21 @@ q-page.column
           .text-h5 VueBro
         q-card-section
           q-timeline(color="black", layout="comfortable", side="left")
-            q-timeline-entry(:title="t('Homepage')", icon="home")
+            q-timeline-entry(icon="home", :title="t('Homepage')")
               template(#subtitle)
                 a.text-no-wrap.text-white(
                   :href="`https://${t('vuebro.github.io')}`",
                   rel="noopener noreferrer",
                   target="_blank"
                 ) {{ t("vuebro.github.io") }}
-            q-timeline-entry(:title="t('Repository')", icon="share")
+            q-timeline-entry(icon="share", :title="t('Repository')")
               template(#subtitle)
                 a.text-no-wrap.text-white(
                   href="https://github.com/vuebro",
                   rel="noopener noreferrer",
                   target="_blank"
                 ) github.com/vuebro
-            q-timeline-entry(:title="t('Facebook')", icon="group")
+            q-timeline-entry(icon="group", :title="t('Facebook')")
               template(#subtitle)
                 a.text-no-wrap.text-white(
                   :href="`https://${t('facebook.com/vuebro')}`",
