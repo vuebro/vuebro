@@ -28,181 +28,12 @@ q-drawer(
           )
             v-interactive-tree
           q-separator
-          q-card(flat)
-            q-item.text-teal
-              q-item-section(avatar)
-                q-icon(name="description")
-              q-item-section
-                q-item-label {{ t("Page Settings") }}
-            q-card-section
-              q-list
-                q-item(v-ripple, tag="label")
-                  q-item-section(avatar)
-                    q-checkbox(v-model="the.flat")
-                  q-item-section
-                    q-item-label flat
-                    q-item-label(caption) flat
-                q-select(
-                  v-model.trim="the.class",
-                  hide-dropdown-icon,
-                  label="class",
-                  multiple,
-                  new-value-mode="add",
-                  stack-label,
-                  use-chips,
-                  use-input
-                )
+          v-page-settings
           q-separator
-          q-card(flat)
-            q-item.text-teal
-              q-item-section(avatar)
-                q-icon(name="travel_explore")
-              q-item-section
-                q-item-label {{ t("SEO Settings") }}
-            q-card-section
-              q-select(
-                v-model="the.type",
-                clearable,
-                hint="type",
-                :label="t('The type of media of your content')",
-                :options="types"
-              )
-              q-input(
-                v-model.trim="the.header",
-                clearable,
-                hint="header",
-                :label="t('Page Header')"
-              )
-              q-input(
-                v-model.trim="the.description",
-                autogrow,
-                clearable,
-                hint="description",
-                :label="t('Page Description')",
-                type="textarea"
-              )
-              q-select(
-                v-model.trim="the.keywords",
-                hide-dropdown-icon,
-                hint="keywords",
-                :label="t('Keywords')",
-                multiple,
-                new-value-mode="add",
-                stack-label,
-                use-chips,
-                use-input
-              )
-              q-input(
-                v-model.trim="loc",
-                clearable,
-                hint="loc",
-                :label="t('Permanent Link')",
-                prefix="/",
-                :rules,
-                type="url"
-              )
-              q-select(
-                v-model="the.changefreq",
-                clearable,
-                hint="changefreq",
-                :label="t('Change Frequency')",
-                :options="changefreq"
-              )
-              q-input(
-                v-model.number="the.priority",
-                hint="priority",
-                :label="t('Priority')",
-                max="1",
-                min="0",
-                step="0.1",
-                type="number"
-              )
-              q-input(
-                v-model="the.lastmod",
-                clearable,
-                hint="lastmod",
-                :label="t('Last Modification')",
-                type="datetime-local"
-              )
-              q-input(
-                v-model.trim="the.icon",
-                clearable,
-                hint="icon",
-                :label="t('Icon')"
-              )
-                template(#prepend)
-                  Icon.q-icon.cursor-pointer(
-                    :icon="the.icon || 'mdi:tray-arrow-up'"
-                  )
-                  q-popup-proxy.column.items-center.justify-center
-                    q-input.q-ma-md(
-                      v-model="filter",
-                      clearable,
-                      dense,
-                      :label="t('Search...')"
-                    )
-                    q-icon-picker(
-                      v-model="icon",
-                      v-model:model-pagination="pagination",
-                      dense,
-                      :filter,
-                      :icons,
-                      tooltips
-                    )
+          v-seo-settings
       q-tab-panel.column.no-padding.justify-center(name="ai")
-        .column.fit.no-wrap(v-if="apiKey && log", @vue:mounted="scrollToEnd")
-          .scroll.q-pa-md.col.self-stretch
-            q-chat-message(
-              v-for="({ content, role }, i) in list",
-              :key="i",
-              ref="chatMessages",
-              :sent="role === 'user'"
-            )
-              div(v-for="(msg, j) in content", :key="j")
-                // eslint-disable-next-line vue/no-v-html
-                .prose.text-xs.select-text(v-html="msg")
-                q-btn(
-                  flat,
-                  icon="content_copy",
-                  round,
-                  size="xs",
-                  @click="clipboard(msg)"
-                )
-                q-btn(
-                  flat,
-                  icon="delete",
-                  round,
-                  size="xs",
-                  @click="content.length < 2 ? log.messages.splice(log.messages.length - i - 1, 1) : log.messages[log.messages.length - i - 1]?.content.splice(j, 1)"
-                )
-          q-input.q-ma-sm(
-            v-model="message",
-            autofocus,
-            autogrow,
-            class="max-h-1/3",
-            dense,
-            input-class="max-h-full",
-            :label="t('How can I help you today?')",
-            @keyup.ctrl.enter="send"
-          )
-            template(#prepend)
-              q-icon.cursor-pointer(name="person")
-                q-tooltip {{ t("Describe AI behavior") }}
-                q-popup-edit(
-                  v-slot="scope",
-                  v-model="log.system",
-                  anchor="bottom end",
-                  buttons
-                )
-                  q-input(
-                    v-model="scope.value",
-                    autofocus,
-                    dense,
-                    :label="t('Describe AI behavior')",
-                    type="textarea"
-                  )
-            template(#after)
-              q-btn(dense, flat, icon="send", round, @click="send")
+        .column.fit.no-wrap(v-if="apiKey")
+          v-ai-chat(:api-key)
         .self-center.text-center(v-else)
           q-btn(color="primary", label="AI key", unelevated, @click="clickAI")
           .q-mt-md {{ t("You need an AI key to use this feature") }}
@@ -256,168 +87,45 @@ q-page.column.full-height.bg-light(v-else)
     q-spinner-hourglass
 </template>
 <script setup lang="ts">
-import type { MistralProvider } from "@ai-sdk/mistral";
-import type { IconNameArray } from "@quasar/quasar-ui-qiconpicker";
-import type { TLog } from "@vuebro/shared";
-import type { RemovableRef } from "@vueuse/core";
-import type { ModelMessage } from "ai";
-import type { ValidationRule } from "quasar";
 import type { TAppPage } from "stores/main";
-import type { ComponentPublicInstance } from "vue";
 
-import { createMistral } from "@ai-sdk/mistral";
-import { Icon } from "@iconify/vue";
-import mdi from "@quasar/quasar-ui-qiconpicker/src/components/icon-set/mdi-v6";
 import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
-import {
-  extractReasoningMiddleware,
-  generateText,
-  wrapLanguageModel,
-} from "ai";
-import changefreq from "assets/changefreq.json";
-import types from "assets/types.json";
+import VAiChat from "components/VAiChat.vue";
 import VImages from "components/VImages.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
+import VPageSettings from "components/VPageSettings.vue";
+import VSeoSettings from "components/VSeoSettings.vue";
 import VWysiwyg from "components/VWysiwyg.vue";
-import dompurify from "dompurify";
-import { marked } from "marked";
-import markedShiki from "marked-shiki";
 import { useQuasar } from "quasar";
-import { createHighlighter } from "shiki";
 import VSourceCode from "src/components/VSourceCode.vue";
-import {
-  cancel,
-  deep,
-  html,
-  immediate,
-  itemsPerPage,
-  mergeDefaults,
-  once,
-  page,
-  persistent,
-} from "stores/defaults";
+import { cancel, html, persistent } from "stores/defaults";
 import { mainStore } from "stores/main";
-import { computed, nextTick, ref, toRefs, useTemplateRef, watch } from "vue";
+import { computed, ref, toRefs, useTemplateRef } from "vue";
 import { useI18n } from "vue-i18n";
 
-const sharedRefs = toRefs(sharedStore),
-  { importmap, kvNodes, nodes, tree } = $(sharedRefs);
-const { log: defaultLog } = sharedRefs;
-
+const { importmap, kvNodes, nodes, tree } = $(toRefs(sharedStore));
 const { rightDrawer, selected } = $(toRefs(mainStore));
-
-const chatMessages = $(
-  useTemplateRef<ComponentPublicInstance[]>("chatMessages"),
-);
 const jsonldRef = $(
   useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
 );
 const vueRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"));
 
-let apiKey = $(useStorage("apiKey", ""));
-let list = $ref<{ content: string[]; role: string }[]>([]),
-  message = $ref("");
-
-const the = $computed(
-  () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
-);
-
 const $q = useQuasar(),
-  /**
-   * Copies data to the clipboard
-   *
-   * @param data - The data to be copied to clipboard
-   * @returns A promise that resolves when the data is copied
-   */
-  clipboard = async (data: string) => {
-    await navigator.clipboard.write([
-      new ClipboardItem({
-        "text/html": new Blob([data], { type: "text/html" }),
-        "text/plain": new Blob([data], { type: "text/plain" }),
-      }),
-    ]);
-  },
   drawerTab = ref("seo"),
-  filter = ref(""),
-  highlighter = await createHighlighter({
-    langs: ["vue", "json", "jsx", "tsx", "html"],
-    themes: ["dark-plus", "light-plus"],
-  }),
-  icon = computed({
-    /**
-     * Gets the icon value with MDI prefix replaced by MDI- format
-     *
-     * @returns The formatted icon value
-     */
-    get() {
-      return the?.icon?.replace(/^mdi:/, "mdi-");
-    },
-    /**
-     * Sets the icon value, converting MDI- format back to MDI: prefix
-     *
-     * @param value - The icon value to set
-     */
-    set(value: string | undefined) {
-      if (value && the) the.icon = value.replace(/^mdi-/, "mdi:");
-    },
-  }),
-  length = 20,
-  loc = computed({
-    /**
-     * Gets the location value
-     *
-     * @returns The location value or null if not set
-     */
-    get() {
-      return the?.loc ?? null;
-    },
-    /**
-     * Sets the location value, removing leading and trailing slashes
-     *
-     * @param value - The location value to set
-     */
-    set(value: null | string) {
-      if (the) the.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
-    },
-  }),
-  markedWithShiki = marked.use(
-    markedShiki({
-      /**
-       * Highlights code with syntax highlighting
-       *
-       * @param code - The code to highlight
-       * @param lang - The language of the code
-       * @returns The highlighted HTML code
-       */
-      highlight: (code, lang) =>
-        highlighter.codeToHtml(code, {
-          lang,
-          theme: "light-plus",
-        }),
-    }),
-  ),
-  pagination = ref({ itemsPerPage, page }),
-  /**
-   * Scrolls to the end of the chat messages container
-   */
-  scrollToEnd = () => {
-    (
-      chatMessages?.[chatMessages.length - 1]?.$el as HTMLElement | undefined
-    )?.scrollIntoView();
-  },
   tab = $ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
     ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
   ]),
-  { icons } = mdi as Record<"icons", IconNameArray>,
+  the = $computed(
+    () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
+  ),
   { t } = useI18n();
 
+let apiKey = $(useStorage("apiKey", ""));
 let initialDrawerWidth = 300,
-  drawerWidth = $ref(initialDrawerWidth),
-  log: RemovableRef<TLog> | undefined,
-  mistral: MistralProvider | undefined;
+  drawerWidth = $ref(initialDrawerWidth);
 
 /**
  * Handles click event to open AI key dialog
@@ -439,38 +147,6 @@ const clickAI = () => {
     });
   },
   /**
-   * Initializes the log for the current page
-   */
-  initLog = () => {
-    if (tree[0]?.id) {
-      log = useStorage(tree[0].id, defaultLog, localStorage, {
-        mergeDefaults,
-      });
-      watch(
-        () => [...(log?.value.messages ?? [])],
-        async (value, oldValue) => {
-          list = await Promise.all(
-            value
-              .map(async ({ content, role }) => ({
-                content: await Promise.all(
-                  content.map(async ({ text }) =>
-                    dompurify.sanitize(await markedWithShiki.parse(text)),
-                  ),
-                ),
-                role,
-              }))
-              .toReversed(),
-          );
-          if (oldValue && value.length > oldValue.length) {
-            await nextTick();
-            scrollToEnd();
-          }
-        },
-        { deep, flush: "post", immediate },
-      );
-    }
-  },
-  /**
    * Handles drawer resize events
    *
    * @param params - The resize parameters
@@ -488,92 +164,5 @@ const clickAI = () => {
     if (isFirst) initialDrawerWidth = drawerWidth;
     const width = initialDrawerWidth - x;
     if (width > 300) drawerWidth = width;
-  },
-  /**
-   * Validation rules for the form inputs
-   */
-  rules: ValidationRule[] = [
-    /**
-     * Validates that the page name is unique
-     *
-     * @param v - The value to validate
-     * @returns True if valid, error message otherwise
-     */
-    (v) =>
-      !v ||
-      !nodes.find(
-        (element) =>
-          element.path === v || (element.id !== the?.id && element.loc === v),
-      ) ||
-      t("That name is already in use"),
-    /**
-     * Validates that the page name doesn't contain prohibited characters
-     *
-     * @param v - The value to validate
-     * @returns True if valid, error message otherwise
-     */
-    (v: null | string) =>
-      !["?", "\\", "#"].some((value) => v?.includes(value)) ||
-      t("Prohibited characters are used"),
-  ];
-
-if (tree[0]?.id) initLog();
-else watch(() => tree[0]?.id, initLog, { once });
-
-watch(
-  $$(apiKey),
-  (value) => {
-    mistral = value ? createMistral({ apiKey: value }) : undefined;
-  },
-  { immediate },
-);
-
-/**
- * Sends a message to the AI assistant
- */
-const send = async () => {
-  if (mistral && log && message) {
-    const content = [{ text: message, type: "text" }],
-      { messages, system } = log.value;
-    if (tab === "vue" && vueRef) {
-      const text = ((await vueRef.getSelection()) ?? "") as string;
-      if (text)
-        content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
-    }
-    if (tab === "jsonld" && jsonldRef) {
-      const text = ((await jsonldRef.getSelection()) ?? "") as string;
-      if (text)
-        content.unshift({ text: `\`\`\`json\n${text}\n\`\`\``, type: "text" });
-    }
-    messages.unshift({ content, role: "user" });
-    message = "";
-    if (messages.length > length) messages.length = length;
-    try {
-      const { text } = await generateText({
-        messages: messages.toReversed() as ModelMessage[],
-        model: wrapLanguageModel({
-          middleware: extractReasoningMiddleware({ tagName: "think" }),
-          model: mistral("magistral-medium-latest"),
-        }),
-        system,
-      });
-      messages.unshift({
-        content: [{ text, type: "text" }],
-        role: "assistant",
-      });
-    } catch (err) {
-      const { message } = err as Error;
-      $q.notify({ message });
-    }
-  }
-};
+  };
 </script>
-
-<style scoped>
-:deep(pre) {
-  white-space: break-spaces;
-}
-.q-textarea :deep(.q-field__control) {
-  height: 100% !important;
-}
-</style>

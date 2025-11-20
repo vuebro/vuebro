@@ -59,10 +59,10 @@ import type { QTree } from "quasar";
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import { debounce, useQuasar } from "quasar";
-import { cancel, immediate, persistent, second } from "stores/defaults";
+import { cancel, deep, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { ref, toRefs, watch, watchEffect } from "vue";
+import { ref, toRefs, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 let selected = $toRef(mainStore, "selected"),
@@ -221,14 +221,14 @@ watch(
   { immediate },
 );
 
-watchEffect(
-  debounce(() => {
-    void putObject(
-      "index.json",
-      JSON.stringify(tree),
-      "application/json",
-    ).catch(consola.error);
+watch(
+  $$(tree),
+  debounce((value) => {
+    putObject("index.json", JSON.stringify(value), "application/json").catch(
+      consola.error,
+    );
   }, second),
+  { deep },
 );
 </script>
 
