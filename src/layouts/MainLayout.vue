@@ -12,7 +12,7 @@ q-layout(view="hHh Lpr lff")
         :ripple="false"
       )
       q-separator(v-if="bucket", dark, vertical)
-      v-main-menu
+      v-main-menu(v-if="bucket")
       q-btn(
         dense,
         flat,

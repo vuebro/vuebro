@@ -48,7 +48,7 @@
     "@smithy/fetch-http-handler": "^5.3.6",
     "@unocss/runtime": "^66.5.7",
     "@vuebro/fsa": "1.0.11",
-    "@vuebro/monaco-sfc": "^1.0.38",
+    "@vuebro/monaco-sfc": "^1.0.39",
     "@vuebro/shared": "^1.2.10",
     "@vueuse/core": "^14.0.0",
     "ai": "^5.0.97",

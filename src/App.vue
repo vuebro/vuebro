@@ -385,21 +385,6 @@ const clearImages = (
     }
   },
   /**
-   * Defines properties on an array of page objects
-   *
-   * @param objects The array of page objects to define properties on
-   */
-  defineProperties = (objects: TPage[]) => {
-    objects.forEach((object) => {
-      Object.defineProperties(object, {
-        contenteditable,
-        html,
-        jsonld,
-        sfc,
-      });
-    });
-  },
-  /**
    * Initializes the application with data from storage
    *
    * @param value The initialization value that triggers data loading when
@@ -491,19 +476,19 @@ const clearImages = (
 /* -------------------------------------------------------------------------- */
 
 watch(() => kvNodes[selected] as TAppPage | undefined, clearImages, { deep });
-watch($$(nodes), defineProperties);
-watch(bucket, init);
 
-watch(
-  $$(tree),
-  debounce((value) => {
-    if (value)
-      putObject("index.json", JSON.stringify(value), "application/json").catch(
-        consola.error,
-      );
-  }, second),
-  { deep },
-);
+watch($$(nodes), (objects) => {
+  objects.forEach((object) => {
+    Object.defineProperties(object, {
+      contenteditable,
+      html,
+      jsonld,
+      sfc,
+    });
+  });
+});
+
+watch(bucket, init);
 
 watch(
   [$$(nodes), $$(feed), $$(domain)],

@@ -1,13 +1,6 @@
 <template lang="pug">
-q-btn(v-if="bucket", flat, icon="newspaper", stretch, @click="clickFeed")
-q-btn-dropdown.q-mr-xs(
-  v-if="bucket",
-  auto-close,
-  dropdown-icon="apps",
-  flat,
-  square,
-  stretch
-)
+q-btn(flat, icon="newspaper", stretch, @click="clickFeed")
+q-btn-dropdown.q-mr-xs(auto-close, dropdown-icon="apps", flat, square, stretch)
   q-list(padding)
     q-item(clickable, @click="clickImportmap")
       q-item-section(avatar)
@@ -61,14 +54,13 @@ import { useQuasar } from "quasar";
 import { cache, persistent } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toRef, toRefs } from "vue";
+import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const sharedRefs = toRefs(sharedStore),
   { feed } = $(sharedRefs);
 
 const $q = useQuasar(),
-  bucket = toRef(ioStore, "bucket"),
   cancel = true,
   manifest = $toRef(mainStore, "manifest"),
   staticEntries = $computed(

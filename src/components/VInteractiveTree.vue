@@ -57,11 +57,12 @@ import type { TPage } from "@vuebro/shared";
 import type { QTree } from "quasar";
 
 import { sharedStore } from "@vuebro/shared";
-import { useQuasar } from "quasar";
-import { cancel, immediate, persistent } from "stores/defaults";
+import { consola } from "consola/browser";
+import { debounce, useQuasar } from "quasar";
+import { cancel, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { ref, toRefs, watch } from "vue";
+import { ref, toRefs, watch, watchEffect } from "vue";
 import { useI18n } from "vue-i18n";
 
 let selected = $toRef(mainStore, "selected"),
@@ -71,7 +72,7 @@ let selected = $toRef(mainStore, "selected"),
 const { kvNodes, nodes, tree } = $(toRefs(sharedStore));
 
 const { add, addChild, down, left, remove, right, up } = sharedStore,
-  { deleteObject } = ioStore;
+  { deleteObject, putObject } = ioStore;
 
 const $q = useQuasar(),
   { t } = useI18n();
@@ -218,6 +219,16 @@ watch(
     if (oldVal) Reflect.defineProperty(oldVal, "contenteditable", { value });
   },
   { immediate },
+);
+
+watchEffect(
+  debounce(() => {
+    void putObject(
+      "index.json",
+      JSON.stringify(tree),
+      "application/json",
+    ).catch(consola.error);
+  }, second),
 );
 </script>
 
