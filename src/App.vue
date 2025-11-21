@@ -17,7 +17,6 @@ import { debounce } from "quasar";
 import { cache, deep, second, writable } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toXML } from "to-xml";
 import { toRef, toRefs, watch } from "vue";
 import toString from "vue-sfc-descriptor-to-string";
 import { parse } from "vue/compiler-sfc";
@@ -525,44 +524,6 @@ watch(
       ).catch(consola.error);
     }
   }),
-  { deep },
-);
-
-watch(
-  [$$(nodes), $$(domain)],
-  debounce((arr) => {
-    const [page, cname] = arr as [TPage[], string];
-    if (cname) {
-      putObject(
-        "sitemap.xml",
-        toXML({
-          "?": 'xml version="1.0" encoding="UTF-8"',
-          urlset: {
-            "@xmlns": "https://www.sitemaps.org/schemas/sitemap/0.9",
-            url: [
-              ...page
-                .filter(({ enabled, path }) => enabled && path !== undefined)
-                .map(({ changefreq, lastmod, priority, to }) => ({
-                  ...(changefreq && { changefreq }),
-                  ...(lastmod && { lastmod }),
-                  ...(priority && { priority }),
-                  loc: `https://${cname}${to === "/" ? "" : encodeURI(to ?? "")}`,
-                })),
-              ...page
-                .filter(({ enabled, loc }) => enabled && loc)
-                .map(({ changefreq, lastmod, loc, priority }) => ({
-                  ...(changefreq && { changefreq }),
-                  ...(lastmod && { lastmod }),
-                  ...(priority && { priority }),
-                  loc: `https://${cname}${encodeURI(loc?.replace(/^\/?/, "/").replace(/\/?$/, "/") ?? "")}`,
-                })),
-            ],
-          },
-        }),
-        "application/xml",
-      ).catch(consola.error);
-    }
-  }, second),
   { deep },
 );
 

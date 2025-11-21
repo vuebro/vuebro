@@ -24,11 +24,12 @@ q-page-sticky(:offset="[18, 18]", position="bottom-right")
       q-fab-action(color="secondary", icon="expand_less", @click="clickUp")
 .scroll.col
   q-tree.q-ma-xs(
+    v-if="nodes[0]",
     ref="qtree",
     v-model:expanded="expanded",
     no-selection-unset,
     node-key="id",
-    :nodes="tree",
+    :nodes="[nodes[0]]",
     :selected
   )
     template(#default-header="prop")
@@ -59,45 +60,21 @@ import type { QTree } from "quasar";
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import { debounce, useQuasar } from "quasar";
-import { cancel, deep, immediate, persistent, second } from "stores/defaults";
+import { cancel, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { ref, toRefs, watch } from "vue";
+import { ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 let selected = $toRef(mainStore, "selected"),
   state = $ref(false),
   visible = $ref(false);
 
-const { kvNodes, nodes, tree } = $(toRefs(sharedStore));
-
-const { add, addChild, down, left, remove, right, up } = sharedStore,
-  { deleteObject, putObject } = ioStore;
+const { deleteObject, putObject } = ioStore,
+  { kvNodes, nodes } = $(toRefs(sharedStore));
 
 const $q = useQuasar(),
-  { t } = useI18n();
-
-/**
- * Cleans up resources associated with pages
- *
- * @param value - The array of pages to clean up
- */
-const cleaner = (value: null | TPage | TPage[] | undefined) => {
-  if (value)
-    (Array.isArray(value) ? value : [value]).forEach(
-      ({ children, id, images }) => {
-        cleaner(children);
-        images.forEach(({ url }) => {
-          void deleteObject(url);
-        });
-        if (id) {
-          void deleteObject(`pages/${id}.vue`);
-          void deleteObject(`pages/${id}.jsonld`);
-        }
-      },
-    );
-};
-const errors = [
+  errors = [
     (propNode: TPage) => !propNode.name,
     (propNode: TPage) =>
       !!nodes.find(
@@ -109,14 +86,37 @@ const errors = [
     (propNode: TPage) =>
       ["?", "\\", "#"].some((value) => propNode.name?.includes(value)),
   ],
-  expanded = ref([tree[0]?.id]),
-  qtree = $ref<QTree>(),
-  value = false;
+  expanded = ref([nodes[0]?.id]),
+  qtree = $(useTemplateRef<QTree>("qtree")),
+  value = false,
+  { add, addChild, down, left, remove, right, up } = sharedStore,
+  { putSitemap } = mainStore,
+  { t } = useI18n();
 
 /**
- * Adds a new node to the tree structure
+ * Cleans up resources associated with pages
+ *
+ * @param value - The array of pages to clean up
  */
-const clickAdd = () => {
+const cleaner = (value: null | TPage | TPage[] | undefined) => {
+    if (value)
+      (Array.isArray(value) ? value : [value]).forEach(
+        ({ children, id, images }) => {
+          cleaner(children);
+          images.forEach(({ url }) => {
+            void deleteObject(url);
+          });
+          if (id) {
+            void deleteObject(`pages/${id}.vue`);
+            void deleteObject(`pages/${id}.jsonld`);
+          }
+        },
+      );
+  },
+  /**
+   * Handles the click event for adding a new node
+   */
+  clickAdd = () => {
     if (selected) {
       const id = kvNodes[selected]?.parent ? add(selected) : addChild(selected);
       if (id) {
@@ -127,10 +127,16 @@ const clickAdd = () => {
     }
     state = true;
   },
+  /**
+   * Handles the click event for moving a node down
+   */
   clickDown = () => {
     if (selected) down(selected);
     state = true;
   },
+  /**
+   * Handles the click event for moving a node to the left (changing parent)
+   */
   clickLeft = () => {
     if (selected) {
       const id = left(selected);
@@ -138,6 +144,9 @@ const clickAdd = () => {
     }
     state = true;
   },
+  /**
+   * Handles the click event for removing a node (with confirmation dialog)
+   */
   clickRemove = () => {
     if (kvNodes[selected]?.parent)
       $q.dialog({
@@ -154,6 +163,9 @@ const clickAdd = () => {
       });
     state = true;
   },
+  /**
+   * Handles the click event for moving a node to the right (changing parent)
+   */
   clickRight = () => {
     if (selected) {
       const id = right(selected);
@@ -161,6 +173,9 @@ const clickAdd = () => {
     }
     state = true;
   },
+  /**
+   * Handles the click event for moving a node up
+   */
   clickUp = () => {
     if (selected) up(selected);
     state = true;
@@ -222,13 +237,15 @@ watch(
 );
 
 watch(
-  $$(tree),
+  nodes,
   debounce((value) => {
-    putObject("index.json", JSON.stringify(value), "application/json").catch(
-      consola.error,
-    );
+    putObject(
+      "index.json",
+      JSON.stringify([value[0]]),
+      "application/json",
+    ).catch(consola.error);
+    putSitemap(value).catch(consola.error);
   }, second),
-  { deep },
 );
 </script>
 

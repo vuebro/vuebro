@@ -58,7 +58,7 @@ import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const sharedRefs = toRefs(sharedStore),
-  { feed } = $(sharedRefs);
+  { feed, nodes } = $(sharedRefs);
 
 const $q = useQuasar(),
   cancel = true,
@@ -73,6 +73,7 @@ const $q = useQuasar(),
       ),
   ),
   { getObjectText, putObject } = ioStore,
+  { putSitemap } = mainStore,
   { t } = useI18n();
 
 let ai = $(useStorage("apiKey", "")),
@@ -124,6 +125,7 @@ const clickAI = () => {
     }).onOk((value: string) => {
       domain = value;
       putObject("CNAME", domain, "text/plain").catch(consola.error);
+      putSitemap(nodes).catch(consola.error);
     });
   },
   /**
