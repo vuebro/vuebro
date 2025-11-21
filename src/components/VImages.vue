@@ -76,43 +76,23 @@ const $q = useQuasar(),
   { t } = useI18n(),
   { urls } = mainStore;
 
-/**
- * Adds a new image at the specified index
- *
- * @param i - The index where to add the new image (-1 to add at the end)
- */
 const add = (i: number) => {
     const alt = "",
       url = "";
     images.splice(i + 1, 0, { alt, url });
   },
-  /**
-   * Copies the URL of the image at the specified index to clipboard
-   *
-   * @param i - The index of the image to copy
-   */
   copy = async (i: number) => {
     if (images[i]?.url) {
       await navigator.clipboard.writeText(images[i].url);
       $q.notify({ message: t("The link has been copied to clipboard") });
     }
   },
-  /**
-   * Moves the image at the specified index to the left
-   *
-   * @param i - The index of the image to move left
-   */
   left = (i: number) => {
     if (i) {
       const prev = images[i - 1];
       if (images[i] && prev) [images[i - 1], images[i]] = [images[i], prev];
     }
   },
-  /**
-   * Removes the image at the specified index after confirming with the user
-   *
-   * @param i - The index of the image to remove
-   */
   remove = (i: number) => {
     $q.dialog({
       cancel: true,
@@ -123,22 +103,12 @@ const add = (i: number) => {
       images.splice(i, 1);
     });
   },
-  /**
-   * Moves the image at the specified index to the right
-   *
-   * @param i - The index of the image to move right
-   */
   right = (i: number) => {
     if (i < images.length - 1) {
       const next = images[i + 1];
       if (images[i] && next) [images[i], images[i + 1]] = [next, images[i]];
     }
   },
-  /**
-   * Opens the file upload dialog for the image at the specified index
-   *
-   * @param i - The index of the image to upload
-   */
   upload = (i: number) => {
     index = i;
     open();

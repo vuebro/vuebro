@@ -118,51 +118,22 @@ const filter = ref(""),
   { t } = useI18n();
 
 const icon = computed({
-    /**
-     * Gets the icon value with MDI prefix replaced by MDI- format
-     *
-     * @returns The formatted icon value
-     */
     get() {
       return the?.icon?.replace(/^mdi:/, "mdi-");
     },
-    /**
-     * Sets the icon value, converting MDI- format back to MDI: prefix
-     *
-     * @param value - The icon value to set
-     */
     set(value: string | undefined) {
       if (value && the) the.icon = value.replace(/^mdi-/, "mdi:");
     },
   }),
   loc = computed({
-    /**
-     * Gets the location value
-     *
-     * @returns The location value or null if not set
-     */
     get() {
       return the?.loc ?? null;
     },
-    /**
-     * Sets the location value, removing leading and trailing slashes
-     *
-     * @param value - The location value to set
-     */
     set(value: null | string) {
       if (the) the.loc = value?.replace(/((?=(\/+))\2)$|(^\/+)/g, "") ?? null;
     },
   }),
-  /**
-   * Validation rules for the form inputs
-   */
   rules: ValidationRule[] = [
-    /**
-     * Validates that the page name is unique
-     *
-     * @param v - The value to validate
-     * @returns True if valid, error message otherwise
-     */
     (v) =>
       !v ||
       !nodes.find(
@@ -170,12 +141,6 @@ const icon = computed({
           element.path === v || (element.id !== the?.id && element.loc === v),
       ) ||
       t("That name is already in use"),
-    /**
-     * Validates that the page name doesn't contain prohibited characters
-     *
-     * @param v - The value to validate
-     * @returns True if valid, error message otherwise
-     */
     (v: null | string) =>
       !["?", "\\", "#"].some((value) => v?.includes(value)) ||
       t("Prohibited characters are used"),

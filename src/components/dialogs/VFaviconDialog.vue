@@ -29,12 +29,6 @@ const $q = useQuasar(),
   { putObject } = ioStore,
   { t } = useI18n();
 
-/**
- * Factory function to handle favicon uploads
- *
- * @param files - Array of files to upload
- * @returns - Always returns a rejected promise
- */
 const factory = async (files: readonly File[]) => {
   const [file] = files;
   let message = t("Favicon uploaded successfully");

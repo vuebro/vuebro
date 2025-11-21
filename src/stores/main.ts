@@ -23,11 +23,6 @@ const { putObject } = ioStore;
 export const mainStore = reactive({
   domain: "",
   manifest: $$(data),
-  /**
-   * Put the sitemap.xml file in the storage
-   *
-   * @param nodes - The pages to include in the sitemap
-   */
   putSitemap: async (nodes: TPage[]) => {
     await putObject(
       "sitemap.xml",

@@ -26,24 +26,11 @@ const credential = $(
 );
 
 export const removeEmptyDirectories = undefined,
-  /**
-   * Sets or clears the S3 client instance
-   *
-   * @param [value] - The S3 client instance to set, or undefined to clear
-   */
   setS3Client = (value?: S3Client) => {
     s3Client?.destroy();
     s3Client = value;
   };
 
-/**
- * Gets an object from an S3 bucket
- *
- * @param Bucket - The name of the S3 bucket
- * @param Key - The key of the object to retrieve
- * @param [ResponseCacheControl] - Optional cache control header
- * @returns The response containing the object
- */
 const getObject = async (
   Bucket: string,
   Key: string,
@@ -62,49 +49,19 @@ const getObject = async (
   return new Response();
 };
 
-/**
- * Deletes an object from an S3 bucket
- *
- * @param Bucket - The name of the S3 bucket
- * @param Key - The key of the object to delete
- * @returns A promise that resolves when the object is deleted
- */
 export const deleteObject = async (Bucket: string, Key: string) => {
     await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
   },
-  /**
-   * Gets an object as a Blob from an S3 bucket
-   *
-   * @param Bucket - The name of the S3 bucket
-   * @param Key - The key of the object to retrieve
-   * @param [ResponseCacheControl] - Optional cache control header
-   * @returns The object as a Blob
-   */
   getObjectBlob = async (
     Bucket: string,
     Key: string,
     ResponseCacheControl?: string,
   ) => (await getObject(Bucket, Key, ResponseCacheControl)).blob(),
-  /**
-   * Gets an object as text from an S3 bucket
-   *
-   * @param Bucket - The name of the S3 bucket
-   * @param Key - The key of the object to retrieve
-   * @param [ResponseCacheControl] - Optional cache control header
-   * @returns The object as text
-   */
   getObjectText = async (
     Bucket: string,
     Key: string,
     ResponseCacheControl?: string,
   ) => (await getObject(Bucket, Key, ResponseCacheControl)).text(),
-  /**
-   * Checks if an S3 bucket exists
-   *
-   * @param Bucket - The name of the S3 bucket to check
-   * @param pin - Optional PIN for authentication
-   * @returns A promise that resolves when the check is complete
-   */
   headBucket = async (Bucket: string, pin: string | undefined) => {
     let { accessKeyId, endpoint, region, secretAccessKey } =
       credential[Bucket] ?? {};
@@ -129,14 +86,6 @@ export const deleteObject = async (Bucket: string, Key: string) => {
       throw new Error(message);
     }
   },
-  /**
-   * Checks if an object exists in an S3 bucket
-   *
-   * @param Bucket - The name of the S3 bucket
-   * @param Key - The key of the object to check
-   * @param [ResponseCacheControl] - Optional cache control header
-   * @returns The output of the head object command or undefined
-   */
   headObject = async (
     Bucket: string,
     Key: string,
@@ -145,15 +94,6 @@ export const deleteObject = async (Bucket: string, Key: string) => {
     s3Client?.send(
       new HeadObjectCommand({ Bucket, Key, ResponseCacheControl }),
     ),
-  /**
-   * Puts an object into an S3 bucket
-   *
-   * @param Bucket - The name of the S3 bucket
-   * @param Key - The key to store the object at
-   * @param body - The content of the object
-   * @param ContentType - The content type of the object
-   * @returns A promise that resolves when the object is stored
-   */
   putObject = async (
     Bucket: string,
     Key: string,

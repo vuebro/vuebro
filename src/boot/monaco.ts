@@ -16,13 +16,6 @@ import TailwindWorker from "monaco-tailwind/tailwind.worker?worker";
 import { createHighlighter } from "shiki";
 
 window.MonacoEnvironment = {
-  /**
-   * Returns a new web worker instance based on the given label
-   *
-   * @param workerId - The ID of the worker
-   * @param label - The label indicating the type of worker to create
-   * @returns - A new web worker instance
-   */
   getWorker: (workerId: string, label: string) => {
     switch (label) {
       case "json":

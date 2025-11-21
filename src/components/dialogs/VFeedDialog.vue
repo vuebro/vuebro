@@ -142,20 +142,10 @@ let row: null | TFeed["items"][0] = null,
   ),
   selected = $ref<TFeed["items"]>([]);
 
-/**
- * Opens a file dialog to add an image attachment to the specified feed item
- *
- * @param value - The feed item to add an image to
- */
 const add = (value: TFeed["items"][0]) => {
     row = value;
     open();
   },
-  /**
-   * Opens a dialog to select an internal link for the given feed item
-   *
-   * @param feed - The feed item to add a link to
-   */
   clickLink = (feed: TFeed["items"][0]) => {
     $q.dialog({
       component: VLinkDialog,
@@ -168,9 +158,6 @@ const add = (value: TFeed["items"][0]) => {
       feed.url = `https://${domain}${value}`;
     });
   },
-  /**
-   * Validates the form and closes the dialog with the feed items if valid
-   */
   clickOk = async () => {
     if (await form?.validate()) onDialogOK(rows);
     else
@@ -178,9 +165,6 @@ const add = (value: TFeed["items"][0]) => {
         message: t("Title must be not empty"),
       });
   },
-  /**
-   * Removes the selected row after confirming with the user
-   */
   removeRow = () => {
     if (selected.length)
       $q.dialog({

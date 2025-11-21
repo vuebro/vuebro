@@ -82,7 +82,7 @@
     "@types/crypto-js": "^4.2.2",
     "@types/path-browserify": "^1.0.3",
     "@types/wicg-file-system-access": "^2023.10.7",
-    "@vuebro/configs": "^1.2.12",
+    "@vuebro/configs": "^1.2.13",
     "@vuebro/runtime": "^1.2.21",
     "autoprefixer": "^10.4.22",
     "electron": "^39.2.3",

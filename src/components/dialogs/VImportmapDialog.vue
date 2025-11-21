@@ -98,9 +98,6 @@ let rows = $ref(
   })),
 );
 
-/**
- * Removes the selected rows after confirming with the user
- */
 const removeRow = () => {
   if (selected.length)
     $q.dialog({

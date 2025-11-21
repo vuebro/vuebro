@@ -105,12 +105,6 @@ let blocks = $ref(false),
 const { putObject } = ioStore;
 
 const Fonts = $toRef(sharedStore, "fonts"),
-  /**
-   * Converts fonts array to an object mapping with underscored keys
-   *
-   * @param fonts - The array of font names to convert
-   * @returns An object mapping with underscored keys
-   */
   getFontsObjectFromArray = (fonts: TFonts) =>
     Object.fromEntries(
       fonts.map((value) => [value.toLowerCase().replace(/ /g, "_"), value]),
@@ -243,11 +237,6 @@ const definitions = {
 };
 
 const emit = defineEmits(["update:modelValue"]),
-  /**
-   * Inserts an image into the editor
-   *
-   * @param file - The image file to be inserted
-   */
   insertImage = (file: File) => {
     const message = t(
         "The graphic file type is not suitable for use on the web",
@@ -270,22 +259,9 @@ const emit = defineEmits(["update:modelValue"]),
       );
     } else $q.notify({ message });
   },
-  /**
-   * Handles context menu events
-   *
-   * @param event - The context menu event
-   */
   onContextmenu = (event: Event) => {
     event.stopPropagation();
   },
-  /**
-   * Handles mouseover events to show element info in tooltip
-   *
-   * @param event - The mouseover event containing currentTarget and target
-   * @param event.currentTarget - The element that the event listener is
-   *   attached to
-   * @param event.target - The element that triggered the event
-   */
   onMouseover = ({ currentTarget, target: element }: Event) => {
     if (blocks && element !== currentTarget && element instanceof Element) {
       const { x = 0, y = 0 } = scrollTarget?.getBoundingClientRect() ?? {};
@@ -299,9 +275,6 @@ const emit = defineEmits(["update:modelValue"]),
       target = element;
     } else target = false;
   },
-  /**
-   * Opens the class dialog to edit element classes
-   */
   openClassDialog = () => {
     if (typeof srcElement !== "boolean") {
       const { classList = [] } = srcElement;
@@ -322,11 +295,6 @@ const emit = defineEmits(["update:modelValue"]),
       });
     }
   },
-  /**
-   * Handles paste events, including drag-and-drop of files
-   *
-   * @param evt - The paste or drag event
-   */
   paste = (evt: ClipboardEvent | DragEvent) => {
     const { files = [] } =
       (evt as DragEvent).dataTransfer ??

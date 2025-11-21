@@ -98,12 +98,6 @@ let list = $ref<{ content: string[]; role: string }[]>([]),
   message = $ref("");
 
 const $q = useQuasar(),
-  /**
-   * Copies data to the clipboard
-   *
-   * @param data - The data to be copied to clipboard
-   * @returns A promise that resolves when the data is copied
-   */
   clipboard = async (data: string) => {
     await navigator.clipboard.write([
       new ClipboardItem({
@@ -119,13 +113,6 @@ const $q = useQuasar(),
   length = 20,
   markedWithShiki = marked.use(
     markedShiki({
-      /**
-       * Highlights code with syntax highlighting
-       *
-       * @param code - The code to highlight
-       * @param lang - The language of the code
-       * @returns The highlighted HTML code
-       */
       highlight: (code, lang) =>
         highlighter.codeToHtml(code, {
           lang,
@@ -133,9 +120,6 @@ const $q = useQuasar(),
         }),
     }),
   ),
-  /**
-   * Scrolls to the end of the chat messages container
-   */
   scrollToEnd = () => {
     (
       chatMessages?.[chatMessages.length - 1]?.$el as HTMLElement | undefined
@@ -146,9 +130,6 @@ const $q = useQuasar(),
 
 let log: RemovableRef<TLog> | undefined, mistral: MistralProvider | undefined;
 
-/**
- * Initializes the log for the current page
- */
 const initLog = () => {
   if (tree[0]?.id) {
     log = useStorage(tree[0].id, defaultLog, localStorage, {
@@ -190,9 +171,6 @@ watch(
   { immediate },
 );
 
-/**
- * Sends a message to the AI assistant
- */
 const send = async () => {
   if (mistral && log && message) {
     const content = [{ text: message, type: "text" }],

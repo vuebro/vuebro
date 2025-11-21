@@ -127,9 +127,6 @@ let apiKey = $(useStorage("apiKey", ""));
 let initialDrawerWidth = 300,
   drawerWidth = $ref(initialDrawerWidth);
 
-/**
- * Handles click event to open AI key dialog
- */
 const clickAI = () => {
     $q.dialog({
       cancel,
@@ -146,14 +143,6 @@ const clickAI = () => {
       apiKey = data;
     });
   },
-  /**
-   * Handles drawer resize events
-   *
-   * @param params - The resize parameters
-   * @param params.isFirst - Whether this is the first resize event
-   * @param params.offset - The offset information
-   * @param params.offset.x - The x offset value
-   */
   resizeDrawer = ({
     isFirst,
     offset: { x },

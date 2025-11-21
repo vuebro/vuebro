@@ -44,20 +44,9 @@ const fields = $ref<QInput[]>([]),
 let error = $ref(false),
   selected = $ref(0);
 
-/**
- * Focuses on the field at the given index
- *
- * @param index - The index of the field to focus on
- */
 const focus = (index: number) => {
     if (index >= 0 && index < length) selected = index;
   },
-  /**
-   * Updates the reference to a field element at a specific index
-   *
-   * @param element - The field element to reference
-   * @param index - The index at which to store the reference
-   */
   updateFieldRef = (
     element: ComponentPublicInstance | Element | null,
     index: number,

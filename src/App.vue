@@ -66,12 +66,6 @@ ${JSON.stringify(importmap, null, 1)}
       ),
   ),
   domParser = new DOMParser(),
-  /**
-   * Parses a string into an HTML document
-   *
-   * @param value - The HTML string to parse
-   * @returns The parsed HTML document
-   */
   getDocument = (value: string) =>
     domParser.parseFromString(
       `<head><base href="//"></head><body>${value}</body>`,
@@ -88,21 +82,6 @@ ${JSON.stringify(importmap, null, 1)}
 /*                                 Функционал                                 */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Handles the page putting operation
- *
- * @param params - The page parameters
- * @param params.branch - The branch of the page
- * @param params.description - The description of the page
- * @param params.images - The images associated with the page
- * @param params.jsonld - The JSON-LD model
- * @param params.keywords - Keywords for the page
- * @param params.loc - The location of the page
- * @param params.path - The path of the page
- * @param params.title - The title of the page
- * @param params.to - The destination of the page
- * @param params.type - The type of the page
- */
 const putPage = async ({
   branch,
   description,
@@ -189,16 +168,6 @@ ${value}
   }
 };
 
-/**
- * Gets or creates a Monaco editor model
- *
- * @param id - The ID of the model
- * @param ext - The file extension
- * @param language - The programming language
- * @param mime - The MIME type
- * @param init - The initial content
- * @returns The Monaco editor model
- */
 const getModel = async (
   id: string,
   ext: string,
@@ -208,9 +177,6 @@ const getModel = async (
 ) => {
   const uri = Uri.parse(`file:///${id}.${language}`);
   let model = editor.getModel(uri);
-  /**
-   * Initializes the object by saving model content to storage
-   */
   const initObject = () => {
     if (model && id) {
       putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
@@ -235,11 +201,6 @@ const getModel = async (
 
 const contenteditable = { value: false, writable },
   html = {
-    /**
-     * Gets the HTML content for a page
-     *
-     * @returns The HTML content
-     */
     async get(this: TAppPage) {
       ({ descriptor } = parse((await this.sfc).getValue()));
       const { template } = descriptor;
@@ -276,11 +237,6 @@ const contenteditable = { value: false, writable },
       });
       return doc.body.innerHTML;
     },
-    /**
-     * Sets the HTML content for a page
-     *
-     * @param value - The HTML string to set
-     */
     async set(this: TAppPage, value: string) {
       const doc = getDocument(value),
         sfc: editor.ITextModel = await this.sfc;
@@ -330,11 +286,6 @@ const contenteditable = { value: false, writable },
     },
   },
   jsonld = {
-    /**
-     * Gets the JSON-LD model for a page
-     *
-     * @returns The JSON-LD model
-     */
     get(this: TAppPage) {
       return this.id
         ? getModel(this.id, "jsonld", "json", "application/ld+json", initJsonLD)
@@ -342,11 +293,6 @@ const contenteditable = { value: false, writable },
     },
   },
   sfc = {
-    /**
-     * Gets the SFC (Single File Component) model for a page
-     *
-     * @returns The SFC model
-     */
     get(this: TAppPage) {
       return this.id
         ? getModel(this.id, "vue", "vue", "text/plain", "<template></template>")
@@ -358,12 +304,6 @@ const contenteditable = { value: false, writable },
 /*                             Функции смотрителей                            */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Watcher function that handles clearing images when the page changes.
- *
- * @param value The new page value that triggered the watcher
- * @param oldValue The previous page value before the change
- */
 const clearImages = (
     value: TAppPage | undefined,
     oldValue: TAppPage | undefined,
@@ -383,12 +323,6 @@ const clearImages = (
       prevImages.push(...images);
     }
   },
-  /**
-   * Initializes the application with data from storage
-   *
-   * @param value The initialization value that triggers data loading when
-   *   truthy
-   */
   init = async (value: string) => {
     if (value) {
       const [getIndex, getFonts, getImportmap, getFeed, getCname, getManifest] =

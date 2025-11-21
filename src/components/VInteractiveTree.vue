@@ -93,11 +93,6 @@ const $q = useQuasar(),
   { putSitemap } = mainStore,
   { t } = useI18n();
 
-/**
- * Cleans up resources associated with pages
- *
- * @param value - The array of pages to clean up
- */
 const cleaner = (value: null | TPage | TPage[] | undefined) => {
     if (value)
       (Array.isArray(value) ? value : [value]).forEach(
@@ -113,9 +108,6 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
         },
       );
   },
-  /**
-   * Handles the click event for adding a new node
-   */
   clickAdd = () => {
     if (selected) {
       const id = kvNodes[selected]?.parent ? add(selected) : addChild(selected);
@@ -127,16 +119,10 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
     }
     state = true;
   },
-  /**
-   * Handles the click event for moving a node down
-   */
   clickDown = () => {
     if (selected) down(selected);
     state = true;
   },
-  /**
-   * Handles the click event for moving a node to the left (changing parent)
-   */
   clickLeft = () => {
     if (selected) {
       const id = left(selected);
@@ -144,9 +130,6 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
     }
     state = true;
   },
-  /**
-   * Handles the click event for removing a node (with confirmation dialog)
-   */
   clickRemove = () => {
     if (kvNodes[selected]?.parent)
       $q.dialog({
@@ -163,9 +146,6 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
       });
     state = true;
   },
-  /**
-   * Handles the click event for moving a node to the right (changing parent)
-   */
   clickRight = () => {
     if (selected) {
       const id = right(selected);
@@ -173,31 +153,16 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
     }
     state = true;
   },
-  /**
-   * Handles the click event for moving a node up
-   */
   clickUp = () => {
     if (selected) up(selected);
     state = true;
   },
-  /**
-   * Checks if a page node has any validation errors
-   *
-   * @param propNode - The page node to check for errors
-   * @returns - Whether the node has any errors
-   */
   error = (propNode: TPage) =>
     errors
       .map((errFnc) => errFnc(propNode))
       .reduceRight(
         (previousValue, currentValue) => previousValue || currentValue,
       ),
-  /**
-   * Gets the error message for a page node, if any
-   *
-   * @param propNode - The page node to check
-   * @returns - The error message or undefined if no error
-   */
   errorMessage = (propNode: TPage) => {
     switch (true) {
       case errors[0]?.(propNode):
@@ -210,11 +175,6 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
         return undefined;
     }
   },
-  /**
-   * Handles intersection observer events to determine visibility
-   *
-   * @param entry - The intersection observer entry
-   */
   onIntersection = (entry: IntersectionObserverEntry) => {
     if (
       entry.target instanceof HTMLElement &&

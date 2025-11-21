@@ -80,9 +80,6 @@ let ai = $(useStorage("apiKey", "")),
   domain = $toRef(mainStore, "domain"),
   { fonts, importmap } = $(sharedRefs);
 
-/**
- * Opens a dialog to get and save the Mistral AI API key
- */
 const clickAI = () => {
     $q.dialog({
       cancel,
@@ -99,21 +96,12 @@ const clickAI = () => {
       ai = data;
     });
   },
-  /**
-   * Opens a dialog to enter and save a custom domain name
-   */
   clickDomain = () => {
     $q.dialog({
       cancel,
       message: t("Enter a valid domain name:"),
       persistent,
       prompt: {
-        /**
-         * Validates whether the provided string is a valid domain name
-         *
-         * @param val - The domain name to validate
-         * @returns - Whether the domain name is valid
-         */
         isValid: (val) =>
           !val ||
           /\b((?=[a-z0-9-]{1,63}\.)(xn--)?[a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,63}\b/.test(
@@ -128,9 +116,6 @@ const clickAI = () => {
       putSitemap(nodes).catch(consola.error);
     });
   },
-  /**
-   * Opens a dialog to manage and update the RSS feed items
-   */
   clickFeed = () => {
     $q.dialog({
       component: VFeedDialog,
@@ -155,9 +140,6 @@ const clickAI = () => {
         .reverse();
     });
   },
-  /**
-   * Opens a dialog to select and save custom fonts
-   */
   clickFonts = () => {
     $q.dialog({
       component: VFontsDialog,
@@ -169,9 +151,6 @@ const clickAI = () => {
       );
     });
   },
-  /**
-   * Opens a dialog to configure and save import map settings
-   */
   clickImportmap = () => {
     $q.dialog({
       component: VImportmapDialog,
@@ -185,9 +164,6 @@ const clickAI = () => {
       ).catch(consola.error);
     });
   },
-  /**
-   * Opens a dialog to edit and save the robots.txt file
-   */
   clickRobots = async () => {
     const title = "robots.txt";
     $q.dialog({

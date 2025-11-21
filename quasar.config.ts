@@ -7,12 +7,6 @@ export default defineConfig(() => ({
   boot: ["main", "route", "quasar-lang-pack", "i18n", "monaco"],
   build: {
     alias: { "node:path": "path-browserify" },
-    /**
-     * Extends the Vite configuration with custom settings. Sets the base path
-     * to './', defines the app version, and adds static copy plugin.
-     *
-     * @returns The extended Vite configuration object
-     */
     extendViteConf: () => ({
       base: "./",
       define: {
