@@ -1,1 +1,4 @@
-{ "@quasar/qiconpicker": {} }
+{
+  "@quasar/qiconpicker": {},
+  "@quasar/qmarkdown": { "import_md": true }
+}
