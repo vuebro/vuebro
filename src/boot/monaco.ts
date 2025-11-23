@@ -20,10 +20,11 @@ window.MonacoEnvironment = {
     switch (label) {
       case "json":
         return new JsonWorker();
-      case "tailwindcss":
-        return new TailwindWorker();
+      case "markdown":
       case "vue":
         return new VueWorker();
+      case "tailwindcss":
+        return new TailwindWorker();
       default:
         return new EditorWorker();
     }
@@ -37,7 +38,7 @@ configureMonacoTailwindcss(monaco, {
 
 shikiToMonaco(
   await createHighlighter({
-    langs: ["vue", "json", "jsx", "tsx"],
+    langs: ["vue", "json", "jsx", "tsx", "md"],
     themes: ["dark-plus", "light-plus"],
   }),
   monaco as typeof monacoNs,
