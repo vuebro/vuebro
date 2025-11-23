@@ -33,7 +33,35 @@ q-drawer(
           v-seo-settings
       q-tab-panel.column.no-padding.justify-center(name="ai")
         .column.fit.no-wrap(v-if="apiKey")
-          v-ai-chat(:api-key)
+          v-ai-chat
+          q-input.q-ma-sm(
+            v-model="message",
+            autofocus,
+            autogrow,
+            class="max-h-1/3",
+            dense,
+            input-class="max-h-full",
+            :label="t('How can I help you today?')",
+            @keyup.ctrl.enter="send"
+          )
+            template(#prepend)
+              q-icon.cursor-pointer(name="person")
+                q-tooltip {{ t("Describe AI behavior") }}
+                q-popup-edit(
+                  v-slot="scope",
+                  v-model="log.system",
+                  anchor="bottom end",
+                  buttons
+                )
+                  q-input(
+                    v-model="scope.value",
+                    autofocus,
+                    dense,
+                    :label="t('Describe AI behavior')",
+                    type="textarea"
+                  )
+            template(#after)
+              q-btn(dense, flat, icon="send", round, @click="send")
         .self-center.text-center(v-else)
           q-btn(color="primary", label="AI key", unelevated, @click="clickAI")
           .q-mt-md {{ t("You need an AI key to use this feature") }}
@@ -87,10 +115,19 @@ q-page.column.full-height.bg-light(v-else)
     q-spinner-hourglass
 </template>
 <script setup lang="ts">
+import type { MistralProvider } from "@ai-sdk/mistral";
+import type { TLog } from "@vuebro/shared";
+import type { ModelMessage } from "ai";
 import type { TAppPage } from "stores/main";
 
+import { createMistral } from "@ai-sdk/mistral";
 import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
+import {
+  extractReasoningMiddleware,
+  generateText,
+  wrapLanguageModel,
+} from "ai";
 import VAiChat from "components/VAiChat.vue";
 import VImages from "components/VImages.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
@@ -99,20 +136,34 @@ import VSeoSettings from "components/VSeoSettings.vue";
 import VWysiwyg from "components/VWysiwyg.vue";
 import { useQuasar } from "quasar";
 import VSourceCode from "src/components/VSourceCode.vue";
-import { cancel, html, persistent } from "stores/defaults";
+import {
+  cancel,
+  html,
+  immediate,
+  mergeDefaults,
+  persistent,
+} from "stores/defaults";
 import { mainStore } from "stores/main";
-import { computed, ref, toRefs, useTemplateRef } from "vue";
+import { computed, ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { importmap, kvNodes, nodes, tree } = $(toRefs(sharedStore));
-const { rightDrawer, selected } = $(toRefs(mainStore));
-const jsonldRef = $(
-  useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef"),
-);
-const vueRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef"));
-
+const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
   drawerTab = ref("seo"),
+  jsonldRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef")),
+  length = 20,
+  vueRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef")),
+  { log: defaultLog } = sharedRefs,
+  { t } = useI18n();
+
+const { importmap, kvNodes, nodes, tree } = $(sharedRefs);
+const { rightDrawer, selected } = $(toRefs(mainStore));
+
+const log = $(
+    useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
+      mergeDefaults,
+    }),
+  ),
   tab = $ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
@@ -120,12 +171,13 @@ const $q = useQuasar(),
   ]),
   the = $computed(
     () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
-  ),
-  { t } = useI18n();
+  );
 
-let apiKey = $(useStorage("apiKey", ""));
-let initialDrawerWidth = 300,
-  drawerWidth = $ref(initialDrawerWidth);
+let apiKey = $(useStorage("apiKey", "")),
+  initialDrawerWidth = 300,
+  drawerWidth = $ref(initialDrawerWidth),
+  message = $ref(""),
+  mistral: MistralProvider | undefined;
 
 const clickAI = () => {
     $q.dialog({
@@ -153,5 +205,58 @@ const clickAI = () => {
     if (isFirst) initialDrawerWidth = drawerWidth;
     const width = initialDrawerWidth - x;
     if (width > 300) drawerWidth = width;
+  },
+  send = async () => {
+    if (mistral && message) {
+      const content = [{ text: message, type: "text" }],
+        { messages, system } = log;
+      if (tab === "vue" && vueRef) {
+        const text = ((await vueRef.getSelection()) ?? "") as string;
+        if (text)
+          content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
+      }
+      if (tab === "jsonld" && jsonldRef) {
+        const text = ((await jsonldRef.getSelection()) ?? "") as string;
+        if (text)
+          content.unshift({
+            text: `\`\`\`json\n${text}\n\`\`\``,
+            type: "text",
+          });
+      }
+      messages.unshift({ content, role: "user" });
+      message = "";
+      if (messages.length > length) messages.length = length;
+      try {
+        const { text } = await generateText({
+          messages: messages.toReversed() as ModelMessage[],
+          model: wrapLanguageModel({
+            middleware: extractReasoningMiddleware({ tagName: "think" }),
+            model: mistral("magistral-medium-latest"),
+          }),
+          system,
+        });
+        messages.unshift({
+          content: [{ text, type: "text" }],
+          role: "assistant",
+        });
+      } catch (err) {
+        const { message } = err as Error;
+        $q.notify({ message });
+      }
+    }
   };
+
+watch(
+  $$(apiKey),
+  (value) => {
+    mistral = value ? createMistral({ apiKey: value }) : undefined;
+  },
+  { immediate },
+);
 </script>
+
+<style scoped>
+.q-textarea :deep(.q-field__control) {
+  height: 100% !important;
+}
+</style>
