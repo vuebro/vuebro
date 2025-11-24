@@ -57,11 +57,9 @@ import { mainStore } from "stores/main";
 import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
-const sharedRefs = toRefs(sharedStore),
-  { feed, nodes } = $(sharedRefs);
-
 const $q = useQuasar(),
   cancel = true,
+  feed = $toRef(sharedStore, "feed"),
   manifest = $toRef(mainStore, "manifest"),
   staticEntries = $computed(
     () =>
@@ -73,12 +71,12 @@ const $q = useQuasar(),
       ),
   ),
   { getObjectText, putObject } = ioStore,
-  { putSitemap } = mainStore,
+  { putPages, putSitemap } = mainStore,
   { t } = useI18n();
 
 let ai = $(useStorage("apiKey", "")),
   domain = $toRef(mainStore, "domain"),
-  { fonts, importmap } = $(sharedRefs);
+  { fonts, importmap } = $(toRefs(sharedStore));
 
 const clickAI = () => {
     $q.dialog({
@@ -113,7 +111,8 @@ const clickAI = () => {
     }).onOk((value: string) => {
       domain = value;
       putObject("CNAME", domain, "text/plain").catch(consola.error);
-      putSitemap(nodes).catch(consola.error);
+      putSitemap().catch(consola.error);
+      putPages().catch(consola.error);
     });
   },
   clickFeed = () => {
@@ -162,6 +161,7 @@ const clickAI = () => {
         JSON.stringify(importmap),
         "application/importmap+json",
       ).catch(consola.error);
+      putPages().catch(consola.error);
     });
   },
   clickRobots = async () => {

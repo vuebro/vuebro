@@ -70,8 +70,7 @@ let selected = $toRef(mainStore, "selected"),
   state = $ref(false),
   visible = $ref(false);
 
-const { deleteObject, putObject } = ioStore,
-  { kvNodes, nodes } = $(toRefs(sharedStore));
+const { kvNodes, nodes } = $(toRefs(sharedStore));
 
 const $q = useQuasar(),
   errors = [
@@ -90,7 +89,8 @@ const $q = useQuasar(),
   qtree = $(useTemplateRef<QTree>("qtree")),
   value = false,
   { add, addChild, down, left, remove, right, up } = sharedStore,
-  { putSitemap } = mainStore,
+  { deleteObject, putObject } = ioStore,
+  { putPages, putSitemap } = mainStore,
   { t } = useI18n();
 
 const cleaner = (value: null | TPage | TPage[] | undefined) => {
@@ -197,14 +197,15 @@ watch(
 );
 
 watch(
-  nodes,
+  $$(nodes),
   debounce((value) => {
     putObject(
       "index.json",
       JSON.stringify([value[0]]),
       "application/json",
     ).catch(consola.error);
-    putSitemap(value).catch(consola.error);
+    putSitemap().catch(consola.error);
+    putPages().catch(consola.error);
   }, second),
 );
 </script>
