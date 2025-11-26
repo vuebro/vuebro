@@ -4,11 +4,9 @@
 
 <script setup lang="ts">
 import type { CompletionRegistration } from "monacopilot";
-import type { ThemeRegistrationRaw } from "shiki";
 
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
-import themeLight from "shiki/themes/light-plus.mjs";
 import { immediate } from "stores/defaults";
 import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
@@ -23,13 +21,6 @@ const { apiKey, model, technologies } = defineProps<{
 
 const monacoRef = $(useTemplateRef<HTMLElement>("monacoRef"));
 
-const ambiguousCharacters = false,
-  automaticLayout = true,
-  fixedOverflowWidgets = true,
-  scrollBeyondLastLine = false,
-  unicodeHighlight = { ambiguousCharacters },
-  { name: theme = "light-plus" }: ThemeRegistrationRaw = themeLight;
-
 watch(
   () => model,
   async () => {
@@ -41,12 +32,11 @@ onMounted(async () => {
   editor =
     monacoRef &&
     monaco.editor.create(monacoRef, {
-      automaticLayout,
-      fixedOverflowWidgets,
+      automaticLayout: true,
+      fixedOverflowWidgets: true,
       model: await model,
-      scrollBeyondLastLine,
-      theme,
-      unicodeHighlight,
+      scrollBeyondLastLine: false,
+      unicodeHighlight: { ambiguousCharacters: false },
     });
   watch(
     [() => apiKey, () => technologies],

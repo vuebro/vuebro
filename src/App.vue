@@ -49,15 +49,16 @@ const domParser = new DOMParser(),
 const getModel = async (
   id: string,
   ext: string,
+  lang: string,
   language: string,
   mime: string,
   init: string,
 ) => {
-  const uri = Uri.parse(`file:///${id}.${language}`);
+  const uri = Uri.parse(`file:///${id}.${lang}`);
   let model = editor.getModel(uri);
   const initObject = () => {
     if (model && id) {
-      putObject(`pages/${id}.${ext}`, model.getValue(), mime).catch(
+      putObject(`docs/${id}.${ext}`, model.getValue(), mime).catch(
         consola.error,
       );
       if (language === "json" && kvNodes[id])
@@ -65,7 +66,7 @@ const getModel = async (
     }
   };
   if (!model) {
-    const value = await getObjectText(`pages/${id}.${ext}`, cache);
+    const value = await getObjectText(`docs/${id}.${ext}`, cache);
     model = editor.createModel(value || init, language, uri);
     model.onDidChangeContent(debounce(initObject, second));
     if (!value) initObject();
@@ -166,14 +167,21 @@ const contenteditable = { value: false, writable },
   jsonld = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "jsonld", "json", "application/ld+json", initJsonLD)
+        ? getModel(
+            this.id,
+            "jsonld",
+            "json",
+            "json",
+            "application/ld+json",
+            initJsonLD,
+          )
         : undefined;
     },
   },
   sfc = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "vue", "vue", "text/plain", "<template></template>")
+        ? getModel(this.id, "md", "vue", "markdown", "text/markdown", "")
         : undefined;
     },
   };
