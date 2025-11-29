@@ -63,11 +63,9 @@ const chatMessages = $(
       }),
     ]);
   },
-  log = $(
-    useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
-      mergeDefaults,
-    }),
-  ),
+  log = useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
+    mergeDefaults,
+  }),
   plugins = [
     mermaid,
     abbreviation,
@@ -87,7 +85,7 @@ const chatMessages = $(
   };
 
 watch(
-  () => [...log.messages],
+  () => [...log.value.messages],
   async (value, oldValue) => {
     if (oldValue && value.length > oldValue.length) {
       await nextTick();

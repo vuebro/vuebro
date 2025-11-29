@@ -67,7 +67,7 @@ q-drawer(
           .q-mt-md {{ t("You need an AI key to use this feature") }}
   q-separator.bg-separator.absolute-left.-left-px.cursor-ew-resize(
     v-touch-pan.preserveCursor.prevent.mouse.horizontal="resizeDrawer",
-    class="after:absolute after:top-1/2 after:-right-[5px] after:-left-[5px] after:h-[30px] after:-translate-y-1/2 after:rounded-[4px] after:bg-gray-400 after:pt-[3px] after:text-center after:content-['∷']",
+    class="after:pt-[3px] after:text-center after:rounded-[4px] after:bg-gray-400 after:h-[30px] after:content-['∷'] after:top-1/2 after:absolute after:-translate-y-1/2 after:-left-[5px] after:-right-[5px]",
     vertical
   )
 q-page.column.full-height(v-if="the")
@@ -159,11 +159,10 @@ const $q = useQuasar(),
 const { importmap, kvNodes, nodes, tree } = $(sharedRefs);
 const { rightDrawer, selected } = $(toRefs(mainStore));
 
-const log = $(
-    useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
-      mergeDefaults,
-    }),
-  ),
+const apiKey = useStorage("apiKey", ""),
+  log = useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
+    mergeDefaults,
+  }),
   tab = $ref("wysiwyg"),
   technologies = computed(() => [
     "tailwindcss",
@@ -173,8 +172,7 @@ const log = $(
     () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
   );
 
-let apiKey = $(useStorage("apiKey", "")),
-  initialDrawerWidth = 300,
+let initialDrawerWidth = 300,
   drawerWidth = $ref(initialDrawerWidth),
   message = $ref(""),
   mistral: MistralProvider | undefined;
@@ -187,12 +185,12 @@ const clickAI = () => {
       persistent,
       prompt: {
         hint: t("paste Mistral API Key only on a trusted computer"),
-        model: apiKey,
+        model: apiKey.value,
         type: "password",
       },
       title: "Mistral API Key",
     }).onOk((data: string) => {
-      apiKey = data;
+      apiKey.value = data;
     });
   },
   resizeDrawer = ({
@@ -209,7 +207,7 @@ const clickAI = () => {
   send = async () => {
     if (mistral && message) {
       const content = [{ text: message, type: "text" }],
-        { messages, system } = log;
+        { messages, system } = log.value;
       if (tab === "vue" && vueRef) {
         const text = ((await vueRef.getSelection()) ?? "") as string;
         if (text)
@@ -247,7 +245,7 @@ const clickAI = () => {
   };
 
 watch(
-  $$(apiKey),
+  apiKey,
   (value) => {
     mistral = value ? createMistral({ apiKey: value }) : undefined;
   },

@@ -27,13 +27,13 @@ let descriptor: SFCDescriptor | undefined,
   tree = $toRef(sharedStore, "tree");
 
 const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
+const { selected, staticEntries } = $(toRefs(mainStore));
 
 const bucket = toRef(ioStore, "bucket"),
   prevImages: string[] = [],
-  selected = $toRef(mainStore, "selected"),
   { deleteObject, getObjectBlob, getObjectText, headObject, putObject } =
     ioStore,
-  { manifest, putPage, urls } = mainStore;
+  { manifest, putPage, putPages, urls } = mainStore;
 
 const domParser = new DOMParser(),
   getDocument = (value: string) =>
@@ -181,7 +181,7 @@ const contenteditable = { value: false, writable },
   sfc = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "md", "vue", "markdown", "text/markdown", "")
+        ? getModel(this.id, "md", "md", "markdown", "text/markdown", "")
         : undefined;
     },
   };
@@ -246,7 +246,7 @@ const clearImages = (
 
       tree = JSON.parse(getIndex ?? "[{}]");
       sharedStore.fonts = JSON.parse(getFonts ?? "[]");
-      importmap.imports = imports;
+      importmap.imports = { ...imports, ...staticEntries };
       feed.items = items;
       domain = cname.trim();
       if (localManifest && serverManifest) {
@@ -275,6 +275,8 @@ const clearImages = (
               ).catch(consola.error);
             })().catch(consola.error);
           });
+
+        putPages().catch(consola.error);
       }
     } else {
       tree.length = 0;

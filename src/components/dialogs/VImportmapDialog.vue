@@ -86,16 +86,13 @@ const $q = useQuasar(),
   { t } = useI18n();
 
 let rows = $ref(
-  [
-    ...Object.entries(staticEntries),
-    ...Object.entries(imports).filter(
-      ([name]) => !Object.keys(staticEntries).includes(name),
-    ),
-  ].map(([name = "", path = ""]) => ({
-    id: uid(),
-    name,
-    path,
-  })),
+  Object.entries({ ...imports, ...staticEntries }).map(
+    ([name = "", path = ""]) => ({
+      id: uid(),
+      name,
+      path,
+    }),
+  ),
 );
 
 const removeRow = () => {

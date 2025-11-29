@@ -97,11 +97,9 @@ const { model = "", pin = null } = defineProps<{
 
 const defaultCredentials = toRef(sharedStore, "credentials");
 
-const credential = $(
-  useStorage("s3", defaultCredentials, localStorage, {
-    mergeDefaults,
-  }),
-);
+const credential = useStorage("s3", defaultCredentials, localStorage, {
+  mergeDefaults,
+});
 
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
@@ -111,14 +109,14 @@ const decrypt = (value?: string) =>
   pin ? AES.decrypt(value ?? "", pin).toString(Utf8) : (value ?? null);
 
 const $q = useQuasar(),
-  accessKeyId = ref(decrypt(credential[model]?.accessKeyId ?? undefined)),
-  Bucket = $ref(decrypt(credential[model]?.Bucket ?? undefined)),
+  accessKeyId = ref(decrypt(credential.value[model]?.accessKeyId ?? undefined)),
+  Bucket = $ref(decrypt(credential.value[model]?.Bucket ?? undefined)),
   bucketRef = useTemplateRef<QInput>("bucketRef"),
-  endpoint = ref(decrypt(credential[model]?.endpoint ?? undefined)),
+  endpoint = ref(decrypt(credential.value[model]?.endpoint ?? undefined)),
   isPwd = ref(true),
-  region = ref(decrypt(credential[model]?.region ?? undefined)),
+  region = ref(decrypt(credential.value[model]?.region ?? undefined)),
   secretAccessKey = ref(
-    decrypt(credential[model]?.secretAccessKey ?? undefined),
+    decrypt(credential.value[model]?.secretAccessKey ?? undefined),
   );
 
 const click = (value: Record<string, null | string>) => {
@@ -137,7 +135,7 @@ const click = (value: Record<string, null | string>) => {
           value,
           writable,
         });
-        triggerRef($$(credential));
+        triggerRef(credential);
         onDialogOK();
       }
   },

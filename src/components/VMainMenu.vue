@@ -58,24 +58,15 @@ import { toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
+  ai = useStorage("apiKey", ""),
   cancel = true,
   feed = $toRef(sharedStore, "feed"),
-  manifest = $toRef(mainStore, "manifest"),
-  staticEntries = $computed(
-    () =>
-      manifest &&
-      Object.fromEntries(
-        Object.values(manifest)
-          .filter(({ isStaticEntry }) => isStaticEntry)
-          .map(({ file, name }) => [name, file]),
-      ),
-  ),
+  staticEntries = $toRef(mainStore, "staticEntries"),
   { getObjectText, putObject } = ioStore,
   { putPages, putSitemap } = mainStore,
   { t } = useI18n();
 
-let ai = $(useStorage("apiKey", "")),
-  domain = $toRef(mainStore, "domain"),
+let domain = $toRef(mainStore, "domain"),
   { fonts, importmap } = $(toRefs(sharedStore));
 
 const clickAI = () => {
@@ -86,12 +77,12 @@ const clickAI = () => {
       persistent,
       prompt: {
         hint: t("paste Mistral API Key only on a trusted computer"),
-        model: ai,
+        model: ai.value,
         type: "password",
       },
       title: "Mistral API Key",
     }).onOk((data: string) => {
-      ai = data;
+      ai.value = data;
     });
   },
   clickDomain = () => {

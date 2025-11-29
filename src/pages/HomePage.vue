@@ -100,16 +100,13 @@ import { useRouter } from "vue-router";
 const $q = useQuasar(),
   APP_VERSION = __APP_VERSION__,
   defaultCredentials = toRef(sharedStore, "credentials"),
+  credential = useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
   rightDrawer = toRef(mainStore, "rightDrawer"),
   router = useRouter(),
   { headBucket, setFileSystemDirectoryHandle } = ioStore,
   { t } = useI18n();
-
-const credential = $(
-  useStorage("s3", defaultCredentials, localStorage, {
-    mergeDefaults,
-  }),
-);
 
 const add = () => {
     $q.dialog({ component: VCredsDialog, componentProps: { persistent } });
@@ -148,10 +145,10 @@ const add = () => {
   },
   getPin = async (name: string): Promise<string | undefined> =>
     new Promise((resolve, reject) => {
-      if (name !== credential[name]?.Bucket) {
+      if (name !== credential.value[name]?.Bucket) {
         $q.dialog({
           component: VOtpDialog,
-          componentProps: { model: credential[name]?.Bucket },
+          componentProps: { model: credential.value[name]?.Bucket },
         })
           .onOk((payload: string) => {
             resolve(payload);
@@ -167,12 +164,12 @@ const add = () => {
       component: VOtpDialog,
       componentProps: {
         model:
-          name === credential[name]?.Bucket
+          name === credential.value[name]?.Bucket
             ? undefined
-            : credential[name]?.Bucket,
+            : credential.value[name]?.Bucket,
       },
     }).onOk((payload: string) => {
-      const cred = credential[name];
+      const cred = credential.value[name];
       if (cred)
         if (name === cred.Bucket) {
           Object.keys(cred).forEach((key) => {
@@ -207,7 +204,7 @@ const add = () => {
       title: t("Confirm"),
     }).onOk(() => {
       Reflect.deleteProperty(credential, name.toString());
-      triggerRef($$(credential));
+      triggerRef(credential);
     });
   };
 

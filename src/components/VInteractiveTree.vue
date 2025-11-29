@@ -60,7 +60,7 @@ import type { QTree } from "quasar";
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import { debounce, useQuasar } from "quasar";
-import { cancel, immediate, persistent, second } from "stores/defaults";
+import { cancel, deep, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { ref, toRefs, useTemplateRef, watch } from "vue";
@@ -207,6 +207,7 @@ watch(
     putSitemap().catch(consola.error);
     putPages().catch(consola.error);
   }, second),
+  { deep },
 );
 </script>
 

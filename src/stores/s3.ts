@@ -18,37 +18,31 @@ import { mergeDefaults } from "stores/defaults";
 let s3Client: S3Client | undefined;
 
 const { credentials: defaults } = sharedStore;
-
-const credential = $(
-  useStorage("s3", defaults, localStorage, {
+const credential = useStorage("s3", defaults, localStorage, {
     mergeDefaults,
   }),
-);
-
-export const removeEmptyDirectories = undefined,
-  setS3Client = (value?: S3Client) => {
-    s3Client?.destroy();
-    s3Client = value;
+  getObject = async (
+    Bucket: string,
+    Key: string,
+    ResponseCacheControl?: string,
+  ) => {
+    if (s3Client)
+      try {
+        const { Body, ContentType } = await s3Client.send(
+          new GetObjectCommand({ Bucket, Key, ResponseCacheControl }),
+        );
+        const headers = new Headers({ "content-type": ContentType ?? "" });
+        return new Response(Body as BodyInit, { headers });
+      } catch {
+        //
+      }
+    return new Response();
   };
 
-const getObject = async (
-  Bucket: string,
-  Key: string,
-  ResponseCacheControl?: string,
-) => {
-  if (s3Client)
-    try {
-      const { Body, ContentType } = await s3Client.send(
-        new GetObjectCommand({ Bucket, Key, ResponseCacheControl }),
-      );
-      const headers = new Headers({ "content-type": ContentType ?? "" });
-      return new Response(Body as BodyInit, { headers });
-    } catch {
-      //
-    }
-  return new Response();
+export const setS3Client = (value?: S3Client) => {
+  s3Client?.destroy();
+  s3Client = value;
 };
-
 export const deleteObject = async (Bucket: string, Key: string) => {
     await s3Client?.send(new DeleteObjectCommand({ Bucket, Key }));
   },
@@ -64,7 +58,7 @@ export const deleteObject = async (Bucket: string, Key: string) => {
   ) => (await getObject(Bucket, Key, ResponseCacheControl)).text(),
   headBucket = async (Bucket: string, pin: string | undefined) => {
     let { accessKeyId, endpoint, region, secretAccessKey } =
-      credential[Bucket] ?? {};
+      credential.value[Bucket] ?? {};
     if (pin) {
       accessKeyId = AES.decrypt(accessKeyId ?? "", pin).toString(Utf8);
       endpoint = AES.decrypt(endpoint ?? "", pin).toString(Utf8);
@@ -105,4 +99,5 @@ export const deleteObject = async (Bucket: string, Key: string) => {
     await s3Client?.send(
       new PutObjectCommand({ Body, Bucket, ContentType, Key }),
     );
-  };
+  },
+  removeEmptyDirectories = undefined;

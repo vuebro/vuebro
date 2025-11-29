@@ -6,7 +6,7 @@ import { consola } from "consola/browser";
 import { editor } from "monaco-editor";
 import { ioStore } from "stores/io";
 import { toXML } from "to-xml";
-import { reactive, toRefs } from "vue";
+import { computed, reactive, toRefs } from "vue";
 
 export type TAppPage = TPage & {
   contenteditable: boolean;
@@ -25,7 +25,7 @@ const body = $computed(() =>
         `<base href="" />
     <script type="importmap">
 ${JSON.stringify(importmap, null, 1)}
-    <\\/script>
+    </script>
     <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/feed+json" href="./feed.json" />
     <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/atom+xml" href="./feed.xml" />
     <link rel="alternate" title="${nodes[0]?.title ?? ""}" type="application/rss+xml" href="./feed-rss.xml" />`,
@@ -123,7 +123,7 @@ export const mainStore = reactive({
       value &&
       `<script type="application/ld+json" id="application/ld+json">
 ${value}
-    <\\/script>`
+    </script>`
     }
   </head>`,
         );
@@ -188,5 +188,14 @@ ${value}
   },
   rightDrawer: false,
   selected: "",
+  staticEntries: computed(
+    (): Record<string, string> =>
+      mainStore.manifest &&
+      Object.fromEntries(
+        Object.values(mainStore.manifest)
+          .filter(({ isStaticEntry }) => isStaticEntry)
+          .map(({ file, name }) => [name, `./${file ?? ""}`]),
+      ),
+  ),
   urls: new Map<string, string>(),
 });
