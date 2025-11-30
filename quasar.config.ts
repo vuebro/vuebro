@@ -43,7 +43,11 @@ export default defineConfig(() => ({
       ["@vue-macros/reactivity-transform/vite"],
     ],
   },
-  css: ["app.css"],
+  css: [
+    "app.css",
+    "~@milkdown/crepe/theme/common/style.css",
+    "~@milkdown/crepe/theme/frame.css",
+  ],
   devServer: { open: false },
   electron: {
     builder: {

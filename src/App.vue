@@ -5,7 +5,6 @@ router-view
 <script setup lang="ts">
 import type { TFeed, TImportmap, TPage } from "@vuebro/shared";
 import type { TAppPage } from "stores/main";
-import type { SFCDescriptor } from "vue/compiler-sfc";
 
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
@@ -17,13 +16,10 @@ import { cache, deep, second, writable } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toRef, toRefs, watch, watchEffect } from "vue";
-import toString from "vue-sfc-descriptor-to-string";
-import { parse } from "vue/compiler-sfc";
 // eslint-disable-next-line import-x/no-unresolved
 import "virtual:uno.css";
 
-let descriptor: SFCDescriptor | undefined,
-  domain = $toRef(mainStore, "domain"),
+let domain = $toRef(mainStore, "domain"),
   tree = $toRef(sharedStore, "tree");
 
 const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
@@ -31,20 +27,12 @@ const { selected, staticEntries } = $(toRefs(mainStore));
 
 const bucket = toRef(ioStore, "bucket"),
   prevImages: string[] = [],
-  { deleteObject, getObjectBlob, getObjectText, headObject, putObject } =
-    ioStore,
+  { deleteObject, getObjectText, headObject, putObject } = ioStore,
   { manifest, putPage, putPages, urls } = mainStore;
 
-const domParser = new DOMParser(),
-  getDocument = (value: string) =>
-    domParser.parseFromString(
-      `<head><base href="//"></head><body>${value}</body>`,
-      "text/html",
-    ),
-  initJsonLD = `{
+const initJsonLD = `{
     "@context": "https://schema.org"
-}`,
-  routerLink = "router-link";
+}`;
 
 const getModel = async (
   id: string,
@@ -79,91 +67,6 @@ const getModel = async (
 /* -------------------------------------------------------------------------- */
 
 const contenteditable = { value: false, writable },
-  html = {
-    async get(this: TAppPage) {
-      ({ descriptor } = parse((await this.sfc).getValue()));
-      const { template } = descriptor;
-      const { content } = template ?? {};
-      const doc = getDocument(content ?? "");
-      doc.querySelectorAll(routerLink).forEach((link) => {
-        const a = document.createElement("a");
-        a.innerHTML = link.innerHTML;
-        a.setAttribute(`data-${routerLink}`, "true");
-        [...link.attributes].forEach((attr) => {
-          if (attr.nodeName === "to")
-            a.setAttribute("href", attr.nodeValue ?? "");
-          else a.setAttributeNode(attr.cloneNode() as Attr);
-        });
-        link.replaceWith(a);
-      });
-      (
-        await Promise.all(
-          [...doc.images].map((image) => {
-            const src = image.getAttribute("src");
-            return src && !urls.has(src)
-              ? getObjectBlob(src)
-              : Promise.resolve(undefined);
-          }),
-        )
-      ).forEach((image, index) => {
-        const src = doc.images[index]?.getAttribute("src") ?? "";
-        if (image?.size) urls.set(src, URL.createObjectURL(image));
-        const url = urls.get(src);
-        if (url) {
-          doc.images[index]?.setAttribute("data-src", src);
-          doc.images[index]?.setAttribute("src", url);
-        }
-      });
-      return doc.body.innerHTML;
-    },
-    async set(this: TAppPage, value: string) {
-      const doc = getDocument(value),
-        sfc: editor.ITextModel = await this.sfc;
-      doc.querySelectorAll("a").forEach((a) => {
-        try {
-          const url = new URL(
-            a.attributes.getNamedItem("href")?.value ?? "",
-            window.location.origin,
-          );
-          if (
-            Boolean(a.dataset[routerLink]) ||
-            (window.location.origin === url.origin &&
-              url.href === `${url.origin}${url.pathname}`)
-          ) {
-            a.removeAttribute(`data-${routerLink}`);
-            const link = document.createElement(routerLink);
-            link.innerHTML = a.innerHTML;
-            [...a.attributes].forEach((attr) => {
-              if (attr.nodeName === "href")
-                link.setAttribute("to", attr.nodeValue ?? "");
-              else link.setAttributeNode(attr.cloneNode() as Attr);
-            });
-            a.replaceWith(link);
-          }
-        } catch {
-          //
-        }
-      });
-      [...doc.images].forEach((image) => {
-        if (image.dataset.src) {
-          image.setAttribute("src", image.dataset.src);
-          image.removeAttribute("data-src");
-        }
-      });
-      if (descriptor) {
-        if (descriptor.template)
-          descriptor.template.content = doc.body.innerHTML;
-        sfc.setValue(
-          `${
-            descriptor.template
-              ? ""
-              : `<template>${doc.body.innerHTML}</template>
-`
-          }${(toString as (sfcDescriptor: SFCDescriptor) => string)(descriptor)}`,
-        );
-      }
-    },
-  },
   jsonld = {
     get(this: TAppPage) {
       return this.id
@@ -302,7 +205,6 @@ watchEffect(() => {
   nodes.forEach((object) => {
     Object.defineProperties(object, {
       contenteditable,
-      html,
       jsonld,
       sfc,
     });

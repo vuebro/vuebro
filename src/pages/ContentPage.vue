@@ -85,21 +85,27 @@ q-page.column.full-height(v-if="the")
     q-tab(label="images", name="images")
   q-separator
   q-tab-panels.full-width.col(v-model="tab")
-    q-tab-panel.column(name="wysiwyg")
+    q-tab-panel(name="wysiwyg")
       Suspense
-        v-wysiwyg(:id="the.id", v-model="the.html")
+        milkdown-provider
+          v-milkdown-editor.full-height.scroll(:model="the.sfc")
         template(#fallback)
           q-inner-loading(showing)
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-source-code(ref="vueRef", :api-key, :model="the.sfc", :technologies)
+        v-monaco-editor(
+          ref="vueRef",
+          :api-key,
+          :model="the.sfc",
+          :technologies
+        )
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
     q-tab-panel(name="jsonld")
       Suspense
-        v-source-code(
+        v-monaco-editor(
           ref="jsonldRef",
           :api-key,
           :model="the.jsonld",
@@ -121,6 +127,7 @@ import type { ModelMessage } from "ai";
 import type { TAppPage } from "stores/main";
 
 import { createMistral } from "@ai-sdk/mistral";
+import { MilkdownProvider } from "@milkdown/vue";
 import { sharedStore } from "@vuebro/shared";
 import { useStorage } from "@vueuse/core";
 import {
@@ -131,11 +138,11 @@ import {
 import VAiChat from "components/VAiChat.vue";
 import VImages from "components/VImages.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
+import VMilkdownEditor from "components/VMilkdownEditor.vue";
+import VMonacoEditor from "components/VMonacoEditor.vue";
 import VPageSettings from "components/VPageSettings.vue";
 import VSeoSettings from "components/VSeoSettings.vue";
-import VWysiwyg from "components/VWysiwyg.vue";
 import { useQuasar } from "quasar";
-import VSourceCode from "src/components/VSourceCode.vue";
 import {
   cancel,
   html,
@@ -150,9 +157,11 @@ import { useI18n } from "vue-i18n";
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
   drawerTab = ref("seo"),
-  jsonldRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("jsonldRef")),
+  jsonldRef = $(
+    useTemplateRef<InstanceType<typeof VMonacoEditor>>("jsonldRef"),
+  ),
   length = 20,
-  vueRef = $(useTemplateRef<InstanceType<typeof VSourceCode>>("vueRef")),
+  vueRef = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("vueRef")),
   { log: defaultLog } = sharedRefs,
   { t } = useI18n();
 
