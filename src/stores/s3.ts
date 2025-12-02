@@ -34,7 +34,7 @@ const credential = useStorage("s3", defaults, localStorage, {
         const headers = new Headers({ "content-type": ContentType ?? "" });
         return new Response(Body as BodyInit, { headers });
       } catch {
-        //
+        return new Response();
       }
     return new Response();
   };

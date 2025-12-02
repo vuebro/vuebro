@@ -64,5 +64,7 @@ export default Object.fromEntries(
     "You need an AI key to use this feature",
     "Describe AI behavior",
     "How can I help you today?",
+    "The file is already exist, do you want to replace it?",
+    "Image upload failed",
   ].map((key) => [key, key]),
 );

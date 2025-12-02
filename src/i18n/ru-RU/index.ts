@@ -93,4 +93,9 @@ export default Object.fromEntries([
   ],
   ["Describe AI behavior", "Опишите поведение AI"],
   ["How can I help you today?", "Чем могу помочь вам сегодня?"],
+  [
+    "The file is already exist, do you want to replace it?",
+    "Файл уже существует, хотите заменить его?",
+  ],
+  ["Image upload failed", "Сбой загрузки изображения"],
 ]);

@@ -25,9 +25,8 @@ const deleteObject = async (Bucket: string, Key: string) => {
       const headers = new Headers(type ? { "content-type": type } : undefined);
       return new Response(body.buffer, { headers });
     } catch {
-      //
+      return new Response();
     }
-    return new Response();
   },
   getObjectBlob = async (Bucket: string, Key: string) =>
     (await getObject(Bucket, Key)).blob(),
