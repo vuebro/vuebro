@@ -37,12 +37,11 @@ const initJsonLD = `{
 const getModel = async (
   id: string,
   ext: string,
-  lang: string,
   language: string,
   mime: string,
   init: string,
 ) => {
-  const uri = Uri.parse(`file:///${id}.${lang}`);
+  const uri = Uri.parse(`file:///${id}.${language}`);
   let model = editor.getModel(uri);
   const initObject = () => {
     if (model && id) {
@@ -70,21 +69,14 @@ const contenteditable = { value: false, writable },
   jsonld = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(
-            this.id,
-            "jsonld",
-            "json",
-            "json",
-            "application/ld+json",
-            initJsonLD,
-          )
+        ? getModel(this.id, "jsonld", "json", "application/ld+json", initJsonLD)
         : undefined;
     },
   },
   sfc = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "md", "md", "markdown", "text/markdown", "")
+        ? getModel(this.id, "md", "mdc", "text/markdown", "")
         : undefined;
     },
   };

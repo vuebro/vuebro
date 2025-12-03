@@ -33,9 +33,14 @@ onMounted(async () => {
     monacoRef &&
     monaco.editor.create(monacoRef, {
       automaticLayout: true,
+      bracketPairColorization: { enabled: true },
+      detectIndentation: false,
       fixedOverflowWidgets: true,
+      formatOnPaste: true,
+      formatOnType: true,
       model: await model,
       scrollBeyondLastLine: false,
+      tabSize: 2,
       unicodeHighlight: { ambiguousCharacters: false },
     });
   watch(
@@ -64,37 +69,7 @@ onMounted(async () => {
     },
     { immediate },
   );
-  if (editor) {
-    editor.focus();
-    const { _themeService: themeService } = editor as unknown as Record<
-      string,
-      Record<string, Record<string, ((...args: never) => unknown) | boolean>>
-    >;
-    if (themeService) {
-      const { _theme: t } = themeService;
-      if (t) {
-        t.semanticHighlighting = true;
-        t.getTokenStyleMetadata = (type: string, modifiers: string[]) => {
-          let foreground = 0;
-          switch (type) {
-            case "class":
-              foreground = 11;
-              break;
-            case "function":
-            case "method":
-              foreground = 12;
-              break;
-            case "property":
-            case "variable":
-              foreground = modifiers.includes("readonly") ? 19 : 9;
-              break;
-            default:
-          }
-          return { foreground };
-        };
-      }
-    }
-  }
+  if (editor) editor.focus();
 });
 
 onBeforeUnmount(() => {
