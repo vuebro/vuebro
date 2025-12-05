@@ -8,6 +8,7 @@ import type { TAppPage } from "stores/main";
 
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
+import { parse } from "hexo-front-matter";
 import jsonfeedToAtom from "jsonfeed-to-atom";
 import jsonfeedToRSS from "jsonfeed-to-rss";
 import { editor, Uri } from "monaco-editor";
@@ -28,11 +29,7 @@ const { selected, staticEntries } = $(toRefs(mainStore));
 const bucket = toRef(ioStore, "bucket"),
   prevImages: string[] = [],
   { deleteObject, getObjectText, headObject, putObject } = ioStore,
-  { manifest, putPage, putPages, urls } = mainStore;
-
-const initJsonLD = `{
-    "@context": "https://schema.org"
-}`;
+  { manifest, putPages, urls } = mainStore;
 
 const getModel = async (
   id: string,
@@ -48,8 +45,17 @@ const getModel = async (
       putObject(`docs/${id}.${ext}`, model.getValue(), mime).catch(
         consola.error,
       );
-      if (language === "json" && kvNodes[id])
-        void putPage(kvNodes[id] as TAppPage);
+      if (kvNodes[id])
+        try {
+          const head = parse(model.getValue());
+          console.log(head);
+          delete head._content;
+          if (JSON.stringify(kvNodes[id].head) !== JSON.stringify(head))
+            kvNodes[id].head = head;
+        } catch {
+          if (JSON.stringify(kvNodes[id].head) !== JSON.stringify({}))
+            kvNodes[id].head = {};
+        }
     }
   };
   if (!model) {
@@ -66,13 +72,6 @@ const getModel = async (
 /* -------------------------------------------------------------------------- */
 
 const contenteditable = { value: false, writable },
-  jsonld = {
-    get(this: TAppPage) {
-      return this.id
-        ? getModel(this.id, "jsonld", "json", "application/ld+json", initJsonLD)
-        : undefined;
-    },
-  },
   sfc = {
     get(this: TAppPage) {
       return this.id
@@ -197,7 +196,6 @@ watchEffect(() => {
   nodes.forEach((object) => {
     Object.defineProperties(object, {
       contenteditable,
-      jsonld,
       sfc,
     });
   });

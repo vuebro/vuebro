@@ -101,10 +101,7 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
           images.forEach(({ url }) => {
             void deleteObject(url);
           });
-          if (id) {
-            void deleteObject(`pages/${id}.vue`);
-            void deleteObject(`pages/${id}.jsonld`);
-          }
+          if (id) void deleteObject(`pages/${id}.vue`);
         },
       );
   },

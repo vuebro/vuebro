@@ -81,7 +81,6 @@ q-page.column.full-height(v-if="the")
   )
     q-tab(label="wysiwyg", name="wysiwyg")
     q-tab(label="vue", name="vue")
-    q-tab(label="json-ld", name="jsonld")
     q-tab(label="images", name="images")
   q-separator
   q-tab-panels.full-width.col(v-model="tab")
@@ -99,17 +98,6 @@ q-page.column.full-height(v-if="the")
           :api-key,
           :model="the.sfc",
           :technologies
-        )
-          template(#fallback)
-            q-inner-loading(showing)
-              q-spinner-hourglass
-    q-tab-panel(name="jsonld")
-      Suspense
-        v-monaco-editor(
-          ref="jsonldRef",
-          :api-key,
-          :model="the.jsonld",
-          :technologies="['json-ld']"
         )
           template(#fallback)
             q-inner-loading(showing)
@@ -157,9 +145,6 @@ import { useI18n } from "vue-i18n";
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
   drawerTab = ref("seo"),
-  jsonldRef = $(
-    useTemplateRef<InstanceType<typeof VMonacoEditor>>("jsonldRef"),
-  ),
   length = 20,
   vueRef = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("vueRef")),
   { log: defaultLog } = sharedRefs,
@@ -221,14 +206,6 @@ const clickAI = () => {
         const text = ((await vueRef.getSelection()) ?? "") as string;
         if (text)
           content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
-      }
-      if (tab === "jsonld" && jsonldRef) {
-        const text = ((await jsonldRef.getSelection()) ?? "") as string;
-        if (text)
-          content.unshift({
-            text: `\`\`\`json\n${text}\n\`\`\``,
-            type: "text",
-          });
       }
       messages.unshift({ content, role: "user" });
       message = "";

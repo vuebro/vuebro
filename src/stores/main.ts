@@ -1,5 +1,6 @@
 import type { TPage } from "@vuebro/shared";
 
+import { createHead, renderSSRHead } from "@unhead/vue/server";
 import { sharedStore } from "@vuebro/shared";
 import { useFetch } from "@vueuse/core";
 import { consola } from "consola/browser";
@@ -11,7 +12,6 @@ import { computed, reactive, toRefs } from "vue";
 export type TAppPage = TPage & {
   contenteditable: boolean;
   html: Promise<string> | string;
-  jsonld: Promise<editor.ITextModel>;
   sfc: Promise<editor.ITextModel>;
 };
 
@@ -41,9 +41,6 @@ ${JSON.stringify(importmap, null, 1)}
   </head>`,
       ),
   ),
-  initJsonLD = `{
-    "@context": "https://schema.org"
-}`,
   oldPages: Record<string, null | string | undefined>[] = [],
   { data: manifest } = useFetch("runtime/.vite/manifest.json").json<
     Record<string, Record<string, string>>
@@ -56,8 +53,8 @@ export const mainStore = reactive({
   putPage: async ({
     branch,
     description,
+    head,
     images,
-    jsonld,
     keywords,
     loc,
     path,
@@ -65,12 +62,11 @@ export const mainStore = reactive({
     to,
     type,
   }: TAppPage) => {
-    let value;
-    try {
-      value = JSON.stringify(JSON.parse((await jsonld).getValue()), null, 1);
-    } catch {
-      value = JSON.stringify(JSON.parse(initJsonLD), null, 1);
-    }
+    console.log(head);
+    const vueHeadClient = createHead();
+    vueHeadClient.push(head);
+    console.log(await renderSSRHead(vueHeadClient));
+
     const canonical =
         mainStore.domain &&
         `https://${mainStore.domain}${to === "/" ? "" : (to ?? "")}`,
@@ -119,12 +115,6 @@ export const mainStore = reactive({
           `<meta property="og:${property}" content="${content.replaceAll('"', "&quot;")}">`,
       ).join(`
     `)}
-    ${
-      value &&
-      `<script type="application/ld+json" id="application/ld+json">
-${value}
-    </script>`
-    }
   </head>`,
         );
     if (htm !== undefined) {
