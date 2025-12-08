@@ -1,6 +1,6 @@
 import type { TPage } from "@vuebro/shared";
 
-import { createHead, renderSSRHead } from "@unhead/vue/server";
+// import { createHead, renderSSRHead } from "@unhead/vue/server";
 import { sharedStore } from "@vuebro/shared";
 import { useFetch } from "@vueuse/core";
 import { consola } from "consola/browser";
@@ -50,10 +50,10 @@ ${JSON.stringify(importmap, null, 1)}
 export const mainStore = reactive({
   domain: "",
   manifest,
-  putPage: async ({
+  putPage: ({
     branch,
     description,
-    head,
+    // head,
     images,
     keywords,
     loc,
@@ -62,10 +62,10 @@ export const mainStore = reactive({
     to,
     type,
   }: TAppPage) => {
-    console.log(head);
-    const vueHeadClient = createHead();
-    vueHeadClient.push(head);
-    console.log(await renderSSRHead(vueHeadClient));
+    // console.log(head);
+    // const vueHeadClient = createHead();
+    // vueHeadClient.push(head);
+    // console.log(await renderSSRHead(vueHeadClient));
 
     const canonical =
         mainStore.domain &&
@@ -143,7 +143,7 @@ export const mainStore = reactive({
       .forEach((value) => {
         const { loc, path } = value;
         oldPages.push({ loc, path });
-        void mainStore.putPage(value);
+        mainStore.putPage(value);
       });
   },
   putSitemap: async () => {

@@ -11,7 +11,7 @@ q-card(v-if="the", flat)
       clearable,
       hint="type",
       :label="t('The type of media of your content')",
-      :options="types"
+      :options="typeOptions"
     )
     q-input(
       v-model.trim="the.header",
@@ -52,7 +52,7 @@ q-card(v-if="the", flat)
       clearable,
       hint="changefreq",
       :label="t('Change Frequency')",
-      :options="changefreq"
+      :options="changefreqOptions"
     )
     q-input(
       v-model.number="the.priority",
@@ -109,6 +109,9 @@ import { computed, ref, toRefs } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { kvNodes, nodes } = $(toRefs(sharedStore));
+
+const typeOptions = ref(types);
+const changefreqOptions = ref(changefreq);
 
 const filter = ref(""),
   pagination = ref({ itemsPerPage, page }),

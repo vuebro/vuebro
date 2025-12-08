@@ -1,5 +1,3 @@
-import type monacoNs from "monaco-editor-core";
-
 import configureMonacoSFC from "@vuebro/monaco-sfc";
 // eslint-disable-next-line import-x/default
 import VueWorker from "@vuebro/monaco-sfc/vue.worker?worker";
@@ -21,5 +19,5 @@ window.MonacoEnvironment = {
   },
 };
 
-void configureMonacoSFC(monaco as typeof monacoNs);
+void configureMonacoSFC(monaco);
 configureMonacoTailwindcss(monaco, { languageSelector: ["markdown"] });

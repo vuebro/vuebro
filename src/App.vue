@@ -38,7 +38,7 @@ const getModel = async (
   mime: string,
   init: string,
 ) => {
-  const uri = Uri.parse(`file:///${id}.${language}`);
+  const uri = Uri.parse(`file:///${id}.${ext}`);
   let model = editor.getModel(uri);
   const initObject = () => {
     if (model && id) {
@@ -75,7 +75,7 @@ const contenteditable = { value: false, writable },
   sfc = {
     get(this: TAppPage) {
       return this.id
-        ? getModel(this.id, "md", "mdc", "text/markdown", "")
+        ? getModel(this.id, "md", "markdown", "text/markdown", "")
         : undefined;
     },
   };

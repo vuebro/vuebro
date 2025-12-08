@@ -41,7 +41,7 @@ q-dialog(ref="dialogRef", @hide="onDialogHide")
         hide-selected,
         hint="",
         label="endpoint url",
-        :options="endpoints",
+        :options="endpointOptions",
         type="url",
         use-input,
         @input-value="(value: string) => { endpoint = value; }"
@@ -94,6 +94,8 @@ const { model = "", pin = null } = defineProps<{
   model?: string;
   pin?: string;
 }>();
+
+const endpointOptions = ref(endpoints);
 
 const defaultCredentials = toRef(sharedStore, "credentials");
 
