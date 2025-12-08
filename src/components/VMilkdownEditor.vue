@@ -6,10 +6,12 @@ Milkdown
 import type { editor } from "monaco-editor";
 
 import { Crepe } from "@milkdown/crepe";
+import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
 import { split } from "hexo-front-matter";
 import { useQuasar } from "quasar";
+import { createHighlighter } from "shiki";
 import { ioStore } from "stores/io";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
@@ -21,7 +23,11 @@ const { model } = defineProps<{
 let front = "",
   md = await model;
 
-const urls = new Map(),
+const highlighter = await createHighlighter({
+    langs: ["html"],
+    themes: ["vitesse-light", "vitesse-dark"],
+  }),
+  urls = new Map(),
   yaml = "---",
   { t } = useI18n();
 const $q = useQuasar(),
@@ -42,6 +48,31 @@ const $q = useQuasar(),
       return value;
     }
   },
+  htmlSchemaExtended = htmlSchema.extendSchema((prev) => {
+    return (ctx) => {
+      const baseSchema = prev(ctx);
+      return {
+        ...baseSchema,
+        toDOM: (node) => {
+          const div = document.createElement("div");
+          div.innerHTML = highlighter.codeToHtml(node.attrs.value, {
+            lang: "html",
+            theme: "vitesse-light",
+          });
+          div.classList = "shadow-1 rounded-borders";
+          return [
+            "div",
+            {
+              ...ctx.get(htmlAttr.key)(node),
+              "data-type": "html",
+              "data-value": node.attrs.value,
+            },
+            div,
+          ];
+        },
+      };
+    };
+  }),
   { getObjectBlob, headObject, putObject } = ioStore,
   { get } = useEditor((root) => {
     const crepe = new Crepe({
@@ -107,6 +138,8 @@ ${markdown}`
         );
       });
     });
+    void crepe.editor.remove(htmlSchema);
+    crepe.editor.use(htmlSchemaExtended);
     return crepe;
   });
 
@@ -119,5 +152,15 @@ watch(
   },
 );
 
-onUnmounted(clearUrls);
+onUnmounted(() => {
+  clearUrls();
+  highlighter.dispose();
+});
 </script>
+
+<style scoped>
+:deep(.milkdown) .editor {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+</style>
