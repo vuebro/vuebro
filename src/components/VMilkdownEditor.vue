@@ -59,7 +59,7 @@ const $q = useQuasar(),
             lang: "html",
             theme: "vitesse-light",
           });
-          div.classList = "shadow-1 rounded-borders";
+          div.classList = "rounded-borders q-card--bordered";
           return [
             "div",
             {
