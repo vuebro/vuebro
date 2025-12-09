@@ -187,5 +187,4 @@ export const mainStore = reactive({
           .map(({ file, name }) => [name, `./${file ?? ""}`]),
       ),
   ),
-  urls: new Map<string, string>(),
 });

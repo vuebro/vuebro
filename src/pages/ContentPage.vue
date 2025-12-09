@@ -81,7 +81,6 @@ q-page.column.full-height(v-if="the")
   )
     q-tab(label="wysiwyg", name="wysiwyg")
     q-tab(label="vue", name="vue")
-    q-tab(label="images", name="images")
   q-separator
   q-tab-panels.full-width.col(v-model="tab")
     q-tab-panel(name="wysiwyg")
@@ -102,8 +101,6 @@ q-page.column.full-height(v-if="the")
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
-    q-tab-panel(name="images")
-      v-images
 q-page.column.full-height.bg-light(v-else)
   q-inner-loading(showing)
     q-spinner-hourglass
@@ -124,7 +121,6 @@ import {
   wrapLanguageModel,
 } from "ai";
 import VAiChat from "components/VAiChat.vue";
-import VImages from "components/VImages.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
 import VMilkdownEditor from "components/VMilkdownEditor.vue";
 import VMonacoEditor from "components/VMonacoEditor.vue";

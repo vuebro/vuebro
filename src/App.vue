@@ -24,12 +24,11 @@ let domain = $toRef(mainStore, "domain"),
   tree = $toRef(sharedStore, "tree");
 
 const { feed, importmap, kvNodes, nodes } = $(toRefs(sharedStore));
-const { selected, staticEntries } = $(toRefs(mainStore));
+const { staticEntries } = $(toRefs(mainStore));
 
 const bucket = toRef(ioStore, "bucket"),
-  prevImages: string[] = [],
   { deleteObject, getObjectText, headObject, putObject } = ioStore,
-  { manifest, putPages, urls } = mainStore;
+  { manifest, putPages } = mainStore;
 
 const getModel = async (
   id: string,
@@ -84,113 +83,86 @@ const contenteditable = { value: false, writable },
 /*                             Функции смотрителей                            */
 /* -------------------------------------------------------------------------- */
 
-const clearImages = (
-    value: TAppPage | undefined,
-    oldValue: TAppPage | undefined,
-  ) => {
-    const images = value?.images.map(({ url = "" }) => url);
-    if (images) {
-      if (value?.id === oldValue?.id) {
-        prevImages
-          .filter((url) => !images.includes(url))
-          .forEach((url) => {
-            URL.revokeObjectURL(urls.get(url) ?? "");
-            urls.delete(url);
-            deleteObject(url).catch(consola.error);
-          });
-      }
-      prevImages.length = 0;
-      prevImages.push(...images);
-    }
-  },
-  init = async (value: string) => {
-    if (value) {
-      const [getIndex, getFonts, getImportmap, getFeed, getCname, getManifest] =
-        (
-          await Promise.all(
+const init = async (value: string) => {
+  if (value) {
+    const [getIndex, getFonts, getImportmap, getFeed, getCname, getManifest] = (
+      await Promise.all(
+        [
+          "index.json",
+          "fonts.json",
+          "index.importmap",
+          "feed.json",
+          "CNAME",
+          ".vite/manifest.json",
+        ].map((file) => getObjectText(file, cache)),
+      )
+    ).map((value) => value || undefined);
+
+    const [cname = ""] = getCname?.split("\n", 1) ?? [],
+      [localManifest, serverManifest] = (
+        [manifest, JSON.parse(getManifest ?? "{}")] as Record<
+          string,
+          Record<string, string[]> | undefined
+        >[]
+      ).map(
+        (element) =>
+          new Set(
             [
-              "index.json",
-              "fonts.json",
-              "index.importmap",
-              "feed.json",
-              "CNAME",
-              ".vite/manifest.json",
-            ].map((file) => getObjectText(file, cache)),
-          )
-        ).map((value) => value || undefined);
+              ...Object.values(element).map(({ file } = {}) => file),
+              ...(element["index.html"]?.css ?? []),
+            ].filter(Boolean) as string[],
+          ),
+      ),
+      files = ["robots.txt", "fonts.json"],
+      { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
+      { items } = JSON.parse(getFeed ?? "{}") as TFeed;
 
-      const [cname = ""] = getCname?.split("\n", 1) ?? [],
-        [localManifest, serverManifest] = (
-          [manifest, JSON.parse(getManifest ?? "{}")] as Record<
-            string,
-            Record<string, string[]> | undefined
-          >[]
-        ).map(
-          (element) =>
-            new Set(
-              [
-                ...Object.values(element).map(({ file } = {}) => file),
-                ...(element["index.html"]?.css ?? []),
-              ].filter(Boolean) as string[],
-            ),
-        ),
-        files = ["robots.txt", "fonts.json"],
-        { imports } = JSON.parse(getImportmap ?? "{}") as TImportmap,
-        { items } = JSON.parse(getFeed ?? "{}") as TFeed;
+    tree = JSON.parse(getIndex ?? "[{}]");
+    sharedStore.fonts = JSON.parse(getFonts ?? "[]");
+    importmap.imports = { ...imports, ...staticEntries };
+    feed.items = items;
+    domain = cname.trim();
+    if (localManifest && serverManifest) {
+      (
+        await Promise.allSettled(files.map((file) => headObject(file, cache)))
+      ).forEach(({ status }, index) => {
+        if (status === "rejected" && files[index])
+          localManifest.add(files[index]);
+      });
 
-      tree = JSON.parse(getIndex ?? "[{}]");
-      sharedStore.fonts = JSON.parse(getFonts ?? "[]");
-      importmap.imports = { ...imports, ...staticEntries };
-      feed.items = items;
-      domain = cname.trim();
-      if (localManifest && serverManifest) {
-        (
-          await Promise.allSettled(files.map((file) => headObject(file, cache)))
-        ).forEach(({ status }, index) => {
-          if (status === "rejected" && files[index])
-            localManifest.add(files[index]);
+      [...serverManifest]
+        .filter((x) => !localManifest.has(x))
+        .forEach((element) => {
+          deleteObject(element).catch(consola.error);
         });
 
-        [...serverManifest]
-          .filter((x) => !localManifest.has(x))
-          .forEach((element) => {
-            deleteObject(element).catch(consola.error);
-          });
+      [...localManifest.add(".vite/manifest.json")]
+        .filter((x) => !serverManifest.has(x))
+        .forEach((element) => {
+          (async () => {
+            const body = await (await fetch(`runtime/${element}`)).blob();
+            putObject(
+              element,
+              new Uint8Array(await body.arrayBuffer()),
+              body.type,
+            ).catch(consola.error);
+          })().catch(consola.error);
+        });
 
-        [...localManifest.add(".vite/manifest.json")]
-          .filter((x) => !serverManifest.has(x))
-          .forEach((element) => {
-            (async () => {
-              const body = await (await fetch(`runtime/${element}`)).blob();
-              putObject(
-                element,
-                new Uint8Array(await body.arrayBuffer()),
-                body.type,
-              ).catch(consola.error);
-            })().catch(consola.error);
-          });
-
-        putPages().catch(consola.error);
-      }
-    } else {
-      tree.length = 0;
-
-      editor.getModels().forEach((model) => {
-        model.dispose();
-      });
-
-      urls.forEach((url, key) => {
-        URL.revokeObjectURL(url);
-        urls.delete(key);
-      });
+      putPages().catch(consola.error);
     }
-  };
+  } else {
+    tree.length = 0;
+
+    editor.getModels().forEach((model) => {
+      model.dispose();
+    });
+  }
+};
 
 /* -------------------------------------------------------------------------- */
 /*                                 Смотрители                                 */
 /* -------------------------------------------------------------------------- */
-
-watch(() => kvNodes[selected] as TAppPage | undefined, clearImages, { deep });
 
 watchEffect(() => {
   nodes.forEach((object) => {
