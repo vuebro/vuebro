@@ -95,33 +95,20 @@ const { model = "", pin = null } = defineProps<{
   pin?: string;
 }>();
 
-const endpointOptions = ref(endpoints);
-
-const defaultCredentials = toRef(sharedStore, "credentials");
-
-const credential = useStorage("s3", defaultCredentials, localStorage, {
-  mergeDefaults,
-});
-
 const { dialogRef, onDialogCancel, onDialogHide, onDialogOK } =
     useDialogPluginComponent(),
   { t } = useI18n();
-
-const decrypt = (value?: string) =>
-  pin ? AES.decrypt(value ?? "", pin).toString(Utf8) : (value ?? null);
-
 const $q = useQuasar(),
+  defaultCredentials = toRef(sharedStore, "credentials"),
+  credential = useStorage("s3", defaultCredentials, localStorage, {
+    mergeDefaults,
+  }),
+  decrypt = (value?: string) =>
+    pin ? AES.decrypt(value ?? "", pin).toString(Utf8) : (value ?? null),
   accessKeyId = ref(decrypt(credential.value[model]?.accessKeyId ?? undefined)),
   Bucket = $ref(decrypt(credential.value[model]?.Bucket ?? undefined)),
   bucketRef = useTemplateRef<QInput>("bucketRef"),
-  endpoint = ref(decrypt(credential.value[model]?.endpoint ?? undefined)),
-  isPwd = ref(true),
-  region = ref(decrypt(credential.value[model]?.region ?? undefined)),
-  secretAccessKey = ref(
-    decrypt(credential.value[model]?.secretAccessKey ?? undefined),
-  );
-
-const click = (value: Record<string, null | string>) => {
+  click = (value: Record<string, null | string>) => {
     if (Bucket)
       if (model !== Bucket && Reflect.has(credential, Bucket))
         $q.dialog({
@@ -150,7 +137,14 @@ const click = (value: Record<string, null | string>) => {
           ]),
         )
       : obj,
-  getRegions = (value: null | string) => regions[(value ?? "") as keyof object];
+  endpoint = ref(decrypt(credential.value[model]?.endpoint ?? undefined)),
+  endpointOptions = ref(endpoints),
+  getRegions = (value: null | string) => regions[(value ?? "") as keyof object],
+  isPwd = ref(true),
+  region = ref(decrypt(credential.value[model]?.region ?? undefined)),
+  secretAccessKey = ref(
+    decrypt(credential.value[model]?.secretAccessKey ?? undefined),
+  );
 
 defineEmits(useDialogPluginComponent.emits);
 </script>

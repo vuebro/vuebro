@@ -39,7 +39,6 @@ q-page-sticky(:offset="[18, 18]", position="bottom-right")
         @dblclick="prop.node.contenteditable = true",
         @keypress.stop
       )
-        q-checkbox.q-mr-xs(v-model="prop.node.enabled", dense)
         q-input.full-width.min-w-96(
           v-model.trim="prop.node.name",
           :bg-color="prop.node.id === selected ? 'primary' : undefined",
@@ -87,25 +86,12 @@ const $q = useQuasar(),
   ],
   expanded = ref([nodes[0]?.id]),
   qtree = $(useTemplateRef<QTree>("qtree")),
-  value = false,
   { add, addChild, down, left, remove, right, up } = sharedStore,
-  { deleteObject, putObject } = ioStore,
+  { putObject } = ioStore,
   { putPages, putSitemap } = mainStore,
   { t } = useI18n();
 
-const cleaner = (value: null | TPage | TPage[] | undefined) => {
-    if (value)
-      (Array.isArray(value) ? value : [value]).forEach(
-        ({ children, id, images }) => {
-          cleaner(children);
-          images.forEach(({ url }) => {
-            void deleteObject(url);
-          });
-          if (id) void deleteObject(`pages/${id}.vue`);
-        },
-      );
-  },
-  clickAdd = () => {
+const clickAdd = () => {
     if (selected) {
       const id = kvNodes[selected]?.parent ? add(selected) : addChild(selected);
       if (id) {
@@ -136,7 +122,6 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
         title: t("Confirm"),
       }).onOk(() => {
         if (selected) {
-          cleaner(kvNodes[selected]);
           const id = remove(selected);
           if (id) selected = id;
         }
@@ -178,17 +163,21 @@ const cleaner = (value: null | TPage | TPage[] | undefined) => {
       entry.target.dataset.id === selected
     )
       visible = entry.isIntersecting;
+    return true;
   };
 
 watch(
-  () => kvNodes[selected],
+  $$(selected),
   (newVal, oldVal) => {
     visible = true;
     if (!newVal) {
       const [{ id } = {}] = nodes;
       selected = id ?? "";
     }
-    if (oldVal) Reflect.defineProperty(oldVal, "contenteditable", { value });
+    if (oldVal && kvNodes[oldVal])
+      Reflect.defineProperty(kvNodes[oldVal], "contenteditable", {
+        value: false,
+      });
   },
   { immediate },
 );

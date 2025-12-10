@@ -13,10 +13,9 @@ import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null;
 
-const { apiKey, model, technologies } = defineProps<{
+const { apiKey, model } = defineProps<{
   apiKey: string;
   model: Promise<monaco.editor.ITextModel>;
-  technologies: string[];
 }>();
 
 const monacoRef = $(useTemplateRef<HTMLElement>("monacoRef"));
@@ -44,7 +43,7 @@ onMounted(async () => {
       unicodeHighlight: { ambiguousCharacters: false },
     });
   watch(
-    [() => apiKey, () => technologies],
+    () => apiKey,
     async () => {
       completion?.deregister();
       completion = null;
@@ -63,7 +62,7 @@ onMounted(async () => {
             // console.error(error);
           },
           requestHandler: ({ body }) => copilot.complete({ body }),
-          technologies,
+          technologies: ["vue", "tailwindcss"],
         });
       }
     },

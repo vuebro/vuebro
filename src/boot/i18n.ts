@@ -3,8 +3,6 @@ import { Lang } from "quasar";
 import messages from "src/i18n";
 import { createI18n } from "vue-i18n";
 
-/* -------------------------------------------------------------------------- */
-
 export default defineBoot(({ app }) => {
   app.use(
     createI18n({
@@ -14,5 +12,3 @@ export default defineBoot(({ app }) => {
     }),
   );
 });
-
-/* -------------------------------------------------------------------------- */

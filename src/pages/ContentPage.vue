@@ -14,23 +14,12 @@ q-drawer(
       indicator-color="primary",
       narrow-indicator
     )
-      q-tab(label="seo", name="seo")
+      q-tab(label="tree", name="tree")
       q-tab(label="ai", name="ai")
     q-separator
     q-tab-panels.col.fit(v-model="drawerTab", keep-alive)
-      q-tab-panel.column.no-padding(name="seo")
-        q-list.fit(v-if="tree && the")
-          q-expansion-item(
-            default-opened,
-            header-class="text-primary",
-            icon="account_tree",
-            :label="t('Content Tree')"
-          )
-            v-interactive-tree
-          q-separator
-          v-page-settings
-          q-separator
-          v-seo-settings
+      q-tab-panel.column.no-padding(name="tree")
+        v-interactive-tree(v-if="tree && the")
       q-tab-panel.column.no-padding.justify-center(name="ai")
         .column.fit.no-wrap(v-if="apiKey")
           v-ai-chat
@@ -82,22 +71,17 @@ q-page.column.full-height(v-if="the")
     q-tab(label="wysiwyg", name="wysiwyg")
     q-tab(label="vue", name="vue")
   q-separator
-  q-tab-panels.full-width.col(v-model="tab")
+  q-tab-panels.full-width.col(v-if="selected", v-model="tab")
     q-tab-panel(name="wysiwyg")
       Suspense
         milkdown-provider
-          v-milkdown-editor.full-height.scroll(:model="the.sfc")
+          v-milkdown-editor.full-height.scroll(:model="getModel(selected)")
         template(#fallback)
           q-inner-loading(showing)
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-monaco-editor(
-          ref="vueRef",
-          :api-key,
-          :model="the.sfc",
-          :technologies
-        )
+        v-monaco-editor(ref="vueRef", :api-key, :model="getModel(selected)")
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
@@ -109,6 +93,7 @@ q-page.column.full-height.bg-light(v-else)
 import type { MistralProvider } from "@ai-sdk/mistral";
 import type { TLog } from "@vuebro/shared";
 import type { ModelMessage } from "ai";
+import type { TouchPanValue } from "quasar";
 import type { TAppPage } from "stores/main";
 
 import { createMistral } from "@ai-sdk/mistral";
@@ -124,29 +109,35 @@ import VAiChat from "components/VAiChat.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
 import VMilkdownEditor from "components/VMilkdownEditor.vue";
 import VMonacoEditor from "components/VMonacoEditor.vue";
-import VPageSettings from "components/VPageSettings.vue";
-import VSeoSettings from "components/VSeoSettings.vue";
-import { useQuasar } from "quasar";
+import { consola } from "consola/browser";
+import { parse } from "hexo-front-matter";
+import { editor, Uri } from "monaco-editor";
+import { debounce, useQuasar } from "quasar";
 import {
+  cache,
   cancel,
   html,
   immediate,
   mergeDefaults,
   persistent,
+  second,
 } from "stores/defaults";
+import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { computed, ref, toRefs, useTemplateRef, watch } from "vue";
+import { ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
+
+const { getObjectText, putObject } = ioStore;
 
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
-  drawerTab = ref("seo"),
+  drawerTab = ref("tree"),
   length = 20,
   vueRef = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("vueRef")),
   { log: defaultLog } = sharedRefs,
   { t } = useI18n();
 
-const { importmap, kvNodes, nodes, tree } = $(sharedRefs);
+const { kvNodes, nodes, tree } = $(sharedRefs);
 const { rightDrawer, selected } = $(toRefs(mainStore));
 
 const apiKey = useStorage("apiKey", ""),
@@ -154,10 +145,6 @@ const apiKey = useStorage("apiKey", ""),
     mergeDefaults,
   }),
   tab = $ref("wysiwyg"),
-  technologies = computed(() => [
-    "tailwindcss",
-    ...Object.keys(importmap.imports).filter((value) => value !== "vue"),
-  ]),
   the = $computed(
     () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
   );
@@ -183,16 +170,55 @@ const clickAI = () => {
       apiKey.value = data;
     });
   },
-  resizeDrawer = ({
-    isFirst,
-    offset: { x },
-  }: {
-    isFirst: boolean;
-    offset: { x: number };
-  }) => {
+  getModel = async (id: string) => {
+    const uri = Uri.parse(`file:///${id}.md`);
+    let model = editor.getModel(uri);
+    const initObject = () => {
+      if (model && id) {
+        void putObject(
+          `docs/${id}.md`,
+          model.getValue(),
+          "text/markdown",
+        ).catch(consola.error);
+        if (kvNodes[id])
+          try {
+            const frontmatter = parse(model.getValue());
+            delete frontmatter._content;
+            if (
+              JSON.stringify(kvNodes[id].frontmatter) !==
+              JSON.stringify(frontmatter)
+            )
+              kvNodes[id].frontmatter = frontmatter;
+          } catch {
+            if (JSON.stringify(kvNodes[id].frontmatter) !== JSON.stringify({}))
+              kvNodes[id].frontmatter = {};
+          }
+      }
+    };
+    if (!model) {
+      const value = await getObjectText(`docs/${id}.md`, cache);
+      model = editor.createModel(
+        value ||
+          `---
+head
+    title: Title
+    description: Description
+---
+`,
+        "markdown",
+        uri,
+      );
+      model.onDidChangeContent(debounce(initObject, second));
+      if (!value) initObject();
+    }
+    return model;
+  },
+  resizeDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} } = {}) => {
     if (isFirst) initialDrawerWidth = drawerWidth;
-    const width = initialDrawerWidth - x;
-    if (width > 300) drawerWidth = width;
+    if (x) {
+      const width = initialDrawerWidth - x;
+      if (width > 300) drawerWidth = width;
+    }
   },
   send = async () => {
     if (mistral && message) {

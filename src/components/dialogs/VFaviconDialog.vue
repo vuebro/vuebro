@@ -24,29 +24,28 @@ import { useI18n } from "vue-i18n";
 
 const uploader = $(useTemplateRef<QUploader>("uploader"));
 
-const $q = useQuasar(),
-  { dialogRef, onDialogHide } = useDialogPluginComponent(),
-  { putObject } = ioStore,
+const { putObject } = ioStore,
   { t } = useI18n();
-
-const factory = async (files: readonly File[]) => {
-  const [file] = files;
-  let message = t("Favicon uploaded successfully");
-  try {
-    if (file)
-      await putObject(
-        "favicon.ico",
-        new Uint8Array(await file.arrayBuffer()),
-        "image/vnd.microsoft.icon",
-      );
-    else throw new Error();
-    uploader?.reset();
-  } catch {
-    message = t("Favicon upload failed");
-  }
-  $q.notify({ message });
-  return Promise.reject(new Error());
-};
+const $q = useQuasar(),
+  factory = async (files: readonly File[]) => {
+    const [file] = files;
+    let message = t("Favicon uploaded successfully");
+    try {
+      if (file)
+        await putObject(
+          "favicon.ico",
+          new Uint8Array(await file.arrayBuffer()),
+          "image/vnd.microsoft.icon",
+        );
+      else throw new Error();
+      uploader?.reset();
+    } catch {
+      message = t("Favicon upload failed");
+    }
+    $q.notify({ message });
+    return Promise.reject(new Error());
+  },
+  { dialogRef, onDialogHide } = useDialogPluginComponent();
 
 defineEmits(useDialogPluginComponent.emits);
 </script>

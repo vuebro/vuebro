@@ -11,8 +11,8 @@ import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
 import { split } from "hexo-front-matter";
 import { useQuasar } from "quasar";
-import { createHighlighter } from "shiki";
 import { ioStore } from "stores/io";
+import { highlighter } from "stores/main";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -23,11 +23,7 @@ const { model } = defineProps<{
 let front = "",
   md = await model;
 
-const highlighter = await createHighlighter({
-    langs: ["html"],
-    themes: ["vitesse-light", "vitesse-dark"],
-  }),
-  urls = new Map(),
+const urls = new Map(),
   yaml = "---",
   { t } = useI18n();
 const $q = useQuasar(),
@@ -56,12 +52,12 @@ const $q = useQuasar(),
         toDOM: (node) => {
           const div = document.createElement("div");
           div.innerHTML = highlighter.codeToHtml(node.attrs.value, {
-            lang: "html",
+            lang: "vue",
             theme: "vitesse-light",
           });
           div.classList = "rounded-borders q-card--bordered";
           return [
-            "div",
+            "span",
             {
               ...ctx.get(htmlAttr.key)(node),
               "data-type": "html",
@@ -152,10 +148,7 @@ watch(
   },
 );
 
-onUnmounted(() => {
-  clearUrls();
-  highlighter.dispose();
-});
+onUnmounted(clearUrls);
 </script>
 
 <style scoped>
