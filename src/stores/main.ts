@@ -74,11 +74,9 @@ ${JSON.stringify({ imports: mainStore.staticEntries ?? {} }, null, 1)}
     },
     putPages: async () => {
       const promises: Promise<void>[] = [];
-      oldPages.forEach((path) => {
-        if (!(nodes as TAppPage[]).find((value) => value.path === path))
-          promises.push(
-            deleteObject(path ? `${path}/index.html` : "index.html"),
-          );
+      oldPages.forEach((url) => {
+        if (!(nodes as TAppPage[]).find(({ path }) => path === url))
+          promises.push(deleteObject(url ? `${url}/index.html` : "index.html"));
       });
       await Promise.allSettled(promises);
       await removeEmptyDirectories();
