@@ -10,7 +10,7 @@ import { consola } from "consola/browser";
 import { editor } from "monaco-editor";
 import { createHighlighterCore } from "shiki/core";
 import { createOnigurumaEngine } from "shiki/engine/oniguruma";
-import wasm from "shiki/wasm";
+import options from "shiki/wasm";
 import { ioStore } from "stores/io";
 import { computed, reactive, toRefs } from "vue";
 
@@ -30,7 +30,7 @@ const oldPages: string[] = [],
   { deleteObject, putObject, removeEmptyDirectories } = ioStore;
 
 export const highlighter = await createHighlighterCore({
-    engine: createOnigurumaEngine(wasm),
+    engine: createOnigurumaEngine(options),
     langs: [vue, mdc],
     themes: [vitesseLight],
   }),
