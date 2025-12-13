@@ -3,8 +3,6 @@ Milkdown
 </template>
 
 <script setup lang="ts">
-import type { editor } from "monaco-editor";
-
 import { Crepe } from "@milkdown/crepe";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { replaceAll } from "@milkdown/utils";
@@ -12,16 +10,14 @@ import { Milkdown, useEditor } from "@milkdown/vue";
 import { split } from "hexo-front-matter";
 import { useQuasar } from "quasar";
 import { ioStore } from "stores/io";
-import { highlighter } from "stores/main";
+import { getModel, highlighter, mainStore } from "stores/main";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { model } = defineProps<{
-  model: Promise<editor.ITextModel>;
-}>();
+const selected = $toRef(mainStore, "selected");
 
 let front = "",
-  md = await model;
+  model = await getModel(selected);
 
 const urls = new Map(),
   yaml = "---",
@@ -34,7 +30,7 @@ const $q = useQuasar(),
     urls.clear();
   },
   getValue = () => {
-    const value = md.getValue(),
+    const value = model.getValue(),
       { content, data, prefixSeparator, separator } = split(value);
     if (data && separator === yaml && prefixSeparator) {
       front = data;
@@ -123,7 +119,7 @@ const $q = useQuasar(),
     });
     crepe.on((listener) => {
       listener.markdownUpdated((ctx, markdown) => {
-        md.setValue(
+        model.setValue(
           front
             ? `${yaml}
 ${front}
@@ -139,14 +135,11 @@ ${markdown}`
     return crepe;
   });
 
-watch(
-  () => model,
-  async () => {
-    md = await model;
-    clearUrls();
-    get()?.action(replaceAll(getValue()));
-  },
-);
+watch($$(selected), async (value) => {
+  model = await getModel(value);
+  clearUrls();
+  get()?.action(replaceAll(getValue()));
+});
 
 onUnmounted(clearUrls);
 </script>

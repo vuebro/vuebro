@@ -75,13 +75,13 @@ q-page.column.full-height(v-if="the")
     q-tab-panel(name="wysiwyg")
       Suspense
         milkdown-provider
-          v-milkdown-editor.full-height.scroll(:model="getModel(selected)")
+          v-milkdown-editor.full-height.scroll
         template(#fallback)
           q-inner-loading(showing)
             q-spinner-hourglass
     q-tab-panel(name="vue")
       Suspense
-        v-monaco-editor(ref="vueRef", :api-key, :model="getModel(selected)")
+        v-monaco-editor(ref="monaco")
           template(#fallback)
             q-inner-loading(showing)
               q-spinner-hourglass
@@ -109,31 +109,23 @@ import VAiChat from "components/VAiChat.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
 import VMilkdownEditor from "components/VMilkdownEditor.vue";
 import VMonacoEditor from "components/VMonacoEditor.vue";
-import { consola } from "consola/browser";
-import { parse } from "hexo-front-matter";
-import { editor, Uri } from "monaco-editor";
-import { debounce, useQuasar } from "quasar";
+import { useQuasar } from "quasar";
 import {
-  cache,
   cancel,
   html,
   immediate,
   mergeDefaults,
   persistent,
-  second,
 } from "stores/defaults";
-import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
-
-const { getObjectText, putObject } = ioStore;
 
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
   drawerTab = ref("tree"),
   length = 20,
-  vueRef = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("vueRef")),
+  monaco = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("monaco")),
   { log: defaultLog } = sharedRefs,
   { t } = useI18n();
 
@@ -170,49 +162,6 @@ const clickAI = () => {
       apiKey.value = data;
     });
   },
-  getModel = async (id: string) => {
-    const uri = Uri.parse(`file:///${id}.md`);
-    let model = editor.getModel(uri);
-    const initObject = () => {
-      if (model && id) {
-        void putObject(
-          `docs/${id}.md`,
-          model.getValue(),
-          "text/markdown",
-        ).catch(consola.error);
-        if (kvNodes[id])
-          try {
-            const frontmatter = parse(model.getValue());
-            delete frontmatter._content;
-            if (
-              JSON.stringify(kvNodes[id].frontmatter) !==
-              JSON.stringify(frontmatter)
-            )
-              kvNodes[id].frontmatter = frontmatter;
-          } catch {
-            if (JSON.stringify(kvNodes[id].frontmatter) !== JSON.stringify({}))
-              kvNodes[id].frontmatter = {};
-          }
-      }
-    };
-    if (!model) {
-      const value = await getObjectText(`docs/${id}.md`, cache);
-      model = editor.createModel(
-        value ||
-          `---
-head
-    title: Title
-    description: Description
----
-`,
-        "markdown",
-        uri,
-      );
-      model.onDidChangeContent(debounce(initObject, second));
-      if (!value) initObject();
-    }
-    return model;
-  },
   resizeDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} } = {}) => {
     if (isFirst) initialDrawerWidth = drawerWidth;
     if (x) {
@@ -224,10 +173,13 @@ head
     if (mistral && message) {
       const content = [{ text: message, type: "text" }],
         { messages, system } = log.value;
-      if (tab === "vue" && vueRef) {
-        const text = ((await vueRef.getSelection()) ?? "") as string;
+      if (tab === "vue" && monaco) {
+        const text = (monaco.getSelection() ?? "") as string;
         if (text)
-          content.unshift({ text: `\`\`\`vue\n${text}\n\`\`\``, type: "text" });
+          content.unshift({
+            text: `\`\`\`markdown\n${text}\n\`\`\``,
+            type: "text",
+          });
       }
       messages.unshift({ content, role: "user" });
       message = "";
