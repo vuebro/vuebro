@@ -6,11 +6,12 @@
 import type { CompletionRegistration } from "monacopilot";
 
 import { useStorage } from "@vueuse/core";
+import { split } from "hexo-front-matter";
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
 import { immediate } from "stores/defaults";
-import { getModel, mainStore } from "stores/main";
-import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
+import { mainStore } from "stores/main";
+import { onBeforeUnmount, onMounted, toRefs, useTemplateRef, watch } from "vue";
 
 let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null,
@@ -18,6 +19,22 @@ let completion: CompletionRegistration | null = null,
 
 const monacoRef = $(useTemplateRef<HTMLElement>("monacoRef"));
 const apiKey = useStorage("apiKey", ""),
+  frontmatter = (value: string) => {
+    if (value && model) {
+      const { data, prefixSeparator, separator } = split(model.getValue());
+      if (data && separator === "---" && prefixSeparator)
+        monaco.editor.setModelMarkers(model, "frontmatter", [
+          {
+            endColumn: 1,
+            endLineNumber: data.split("\n").length + 2,
+            message: value,
+            severity: monaco.MarkerSeverity.Error,
+            startColumn: 1,
+            startLineNumber: 2,
+          },
+        ]);
+    } else monaco.editor.removeAllMarkers("frontmatter");
+  },
   monacopilot = (value: string) => {
     completion?.deregister();
     completion = null;
@@ -40,7 +57,8 @@ const apiKey = useStorage("apiKey", ""),
       });
     }
   },
-  selected = $toRef(mainStore, "selected");
+  { getModel } = mainStore,
+  { message, selected } = toRefs(mainStore);
 
 defineExpose({
   getSelection: () => {
@@ -55,10 +73,11 @@ defineExpose({
 });
 
 watch(apiKey, monacopilot);
+watch(message, frontmatter);
 
 onMounted(() => {
   watch(
-    $$(selected),
+    selected,
     async (value) => {
       model = await getModel(value);
       if (editor) editor.setModel(model);
@@ -78,6 +97,7 @@ onMounted(() => {
             unicodeHighlight: { ambiguousCharacters: false },
           });
         monacopilot(apiKey.value);
+        frontmatter(message.value);
       }
       editor?.focus();
     },

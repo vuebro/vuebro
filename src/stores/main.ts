@@ -3,7 +3,11 @@ import type { TPage } from "@vuebro/shared";
 import mdc from "@shikijs/langs/mdc";
 import vue from "@shikijs/langs/vue";
 import vitesseLight from "@shikijs/themes/vitesse-light";
-// import { createHead, renderSSRHead } from "@unhead/vue/server";
+import {
+  createHead,
+  // propsToString, TODO: use it for "attrs" https://github.com/unjs/unhead/blob/main/packages/unhead/src/server/util/ssrRenderTags.ts
+  renderSSRHead,
+} from "@unhead/vue/server";
 import { sharedStore } from "@vuebro/shared";
 import { useFetch } from "@vueuse/core";
 import { consola } from "consola/browser";
@@ -27,55 +31,30 @@ const { data: index } = $(useFetch(`runtime/index.html`).text());
 const { kvNodes, nodes } = $(toRefs(sharedStore));
 
 const oldPages: string[] = [],
+  parseFrontmatter = (id: string) => {
+    const model = editor.getModel(Uri.parse(`file:///${id}.md`));
+    if (model && kvNodes[id])
+      try {
+        const frontmatter = parse(model.getValue());
+        delete frontmatter._content;
+        if (
+          JSON.stringify(kvNodes[id].frontmatter) !==
+          JSON.stringify(frontmatter)
+        )
+          kvNodes[id].frontmatter = frontmatter;
+      } catch (error) {
+        const { message } = error as Error;
+        if (JSON.stringify(kvNodes[id].frontmatter) !== JSON.stringify({}))
+          kvNodes[id].frontmatter = {};
+        return message;
+      }
+    return "";
+  },
   { data: manifest } = useFetch("runtime/.vite/manifest.json").json<
     Record<string, Record<string, string>>
   >(),
   { deleteObject, getObjectText, putObject, removeEmptyDirectories } = ioStore;
-
-export const getModel = async (id: string) => {
-    const uri = Uri.parse(`file:///${id}.md`);
-    let model = editor.getModel(uri);
-    const initObject = () => {
-      if (model && id) {
-        void putObject(
-          `docs/${id}.md`,
-          model.getValue(),
-          "text/markdown",
-        ).catch(consola.error);
-        if (kvNodes[id])
-          try {
-            const frontmatter = parse(model.getValue());
-            delete frontmatter._content;
-            if (
-              JSON.stringify(kvNodes[id].frontmatter) !==
-              JSON.stringify(frontmatter)
-            )
-              kvNodes[id].frontmatter = frontmatter;
-          } catch {
-            if (JSON.stringify(kvNodes[id].frontmatter) !== JSON.stringify({}))
-              kvNodes[id].frontmatter = {};
-          }
-      }
-    };
-    if (!model) {
-      const value = await getObjectText(`docs/${id}.md`, cache);
-      model = editor.createModel(
-        value ||
-          `---
-head
-    title: Title
-    description: Description
----
-`,
-        "markdown",
-        uri,
-      );
-      model.onDidChangeContent(debounce(initObject, second));
-      if (!value) initObject();
-    }
-    return model;
-  },
-  highlighter = await createHighlighterCore({
+export const highlighter = await createHighlighterCore({
     engine: createOnigurumaEngine(options),
     langs: [vue, mdc],
     themes: [vitesseLight],
@@ -91,32 +70,72 @@ ${JSON.stringify({ imports: mainStore.staticEntries ?? {} }, null, 1)}
       ),
     ),
     domain: "",
+    getModel: async (id: string) => {
+      const uri = Uri.parse(`file:///${id}.md`);
+      let model = editor.getModel(uri);
+      const putObjectDebounced = debounce(() => {
+        if (model)
+          void putObject(
+            `docs/${id}.md`,
+            model.getValue(),
+            "text/markdown",
+          ).catch(consola.error);
+      }, second);
+      if (!model) {
+        const value = await getObjectText(`docs/${id}.md`, cache);
+        model = editor.createModel(
+          value ||
+            `---
+title: Title
+description: Description
+attrs:
+  class:
+    - prose
+    - max-w-none
+joint: true
+---
+`,
+          "markdown",
+          uri,
+        );
+        model.onDidChangeContent(() => {
+          mainStore.message = parseFrontmatter(id);
+          putObjectDebounced();
+        });
+        mainStore.message = parseFrontmatter(id);
+        if (!value) putObjectDebounced();
+      }
+      return model;
+    },
     manifest,
-    putPage: ({ branch, frontmatter: { alias } = {}, path }: TAppPage) => {
-      // console.log(head);
-      // const vueHeadClient = createHead();
-      // vueHeadClient.push(head);
-      // console.log(await renderSSRHead(vueHeadClient));
-
-      const htm = mainStore.body?.replace(
-        '<base href="" />',
-        `<base href="${
-          Array(branch.length - 1)
-            .fill("..")
-            .join("/") || "./"
-        }" />`,
-      );
-      if (htm !== undefined) {
-        if (typeof alias === "string")
-          putObject(`${alias}/index.html`, htm, "text/html").catch(
-            consola.error,
-          );
+    message: "",
+    putPage: async ({ branch, frontmatter, path }: TAppPage) => {
+      const getHeadTags = async () => {
+        const vueHeadClient = createHead({ disableDefaults: true });
+        vueHeadClient.push(frontmatter);
+        const { headTags } = await renderSSRHead(vueHeadClient);
+        return headTags;
+      };
+      const htm = mainStore.body
+        ?.replace(
+          '<base href="" />',
+          `<base href="${
+            Array(branch.length - 1)
+              .fill("..")
+              .join("/") || "./"
+          }" />`,
+        )
+        .replace(
+          "</head>",
+          `${await getHeadTags()}
+</head>`,
+        );
+      if (htm !== undefined)
         putObject(
           path ? `${path}/index.html` : "index.html",
           htm,
           "text/html",
         ).catch(consola.error);
-      }
     },
     putPages: async () => {
       const promises: Promise<void>[] = [];
@@ -129,9 +148,9 @@ ${JSON.stringify({ imports: mainStore.staticEntries ?? {} }, null, 1)}
       oldPages.length = 0;
       (nodes as TAppPage[]).forEach((value) => {
         const { path } = value;
-        if (path) {
+        if (path !== undefined) {
           oldPages.push(path);
-          mainStore.putPage(value);
+          void mainStore.putPage(value);
         }
       });
     },

@@ -10,11 +10,12 @@ import { Milkdown, useEditor } from "@milkdown/vue";
 import { split } from "hexo-front-matter";
 import { useQuasar } from "quasar";
 import { ioStore } from "stores/io";
-import { getModel, highlighter, mainStore } from "stores/main";
+import { highlighter, mainStore } from "stores/main";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const selected = $toRef(mainStore, "selected");
+const selected = $toRef(mainStore, "selected"),
+  { getModel } = mainStore;
 
 let front = "",
   model = await getModel(selected);
