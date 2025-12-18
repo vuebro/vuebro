@@ -16,6 +16,7 @@ import "virtual:uno.css";
 let tree = $toRef(sharedStore, "tree");
 
 const bucket = toRef(ioStore, "bucket"),
+  domain = toRef(mainStore, "domain"),
   nodes = $toRef(sharedStore, "nodes"),
   { deleteObject, getObjectText, headObject, putObject } = ioStore,
   { manifest, putPages } = mainStore;
@@ -32,15 +33,16 @@ watchEffect(() => {
 
 watch(bucket, async (value) => {
   if (value) {
-    const [getIndex, getManifest] = (
+    const [getIndex, getManifest, getCname] = (
       await Promise.all(
-        ["index.json", ".vite/manifest.json"].map((file) =>
+        ["index.json", ".vite/manifest.json", "CNAME"].map((file) =>
           getObjectText(file, cache),
         ),
       )
     ).map((value) => value || undefined);
 
-    const [localManifest, serverManifest] = (
+    const [cname = ""] = getCname?.split("\n", 1) ?? [],
+      [localManifest, serverManifest] = (
         [manifest, JSON.parse(getManifest ?? "{}")] as Record<
           string,
           Record<string, string[]> | undefined
@@ -57,6 +59,7 @@ watch(bucket, async (value) => {
       files = ["robots.txt"];
 
     tree = JSON.parse(getIndex ?? "[{}]");
+    domain.value = cname;
     if (localManifest && serverManifest) {
       (
         await Promise.allSettled(files.map((file) => headObject(file, cache)))

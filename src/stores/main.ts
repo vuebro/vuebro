@@ -3,11 +3,8 @@ import type { TPage } from "@vuebro/shared";
 import mdc from "@shikijs/langs/mdc";
 import vue from "@shikijs/langs/vue";
 import vitesseLight from "@shikijs/themes/vitesse-light";
-import {
-  createHead,
-  // propsToString, TODO: use it for "attrs" https://github.com/unjs/unhead/blob/main/packages/unhead/src/server/util/ssrRenderTags.ts
-  renderSSRHead,
-} from "@unhead/vue/server";
+import { InferSeoMetaPlugin } from "@unhead/addons";
+import { createHead, renderSSRHead } from "@unhead/vue/server";
 import { sharedStore } from "@vuebro/shared";
 import { useFetch } from "@vueuse/core";
 import { consola } from "consola/browser";
@@ -19,15 +16,17 @@ import { createOnigurumaEngine } from "shiki/engine/oniguruma";
 import options from "shiki/wasm";
 import { cache, second } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { computed, reactive, toRefs } from "vue";
+import {
+  AliasSortingPlugin,
+  CanonicalPlugin,
+  TemplateParamsPlugin,
+} from "unhead/plugins";
+import { reactive, toRefs } from "vue";
 
 export type TAppPage = TPage & {
   contenteditable: boolean;
-  html: Promise<string> | string;
-  sfc: Promise<editor.ITextModel>;
 };
 
-const { data: index } = $(useFetch(`runtime/index.html`).text());
 const { kvNodes, nodes } = $(toRefs(sharedStore));
 
 const oldPages: string[] = [],
@@ -50,6 +49,7 @@ const oldPages: string[] = [],
       }
     return "";
   },
+  { data: body } = useFetch(`runtime/index.html`).text(),
   { data: manifest } = useFetch("runtime/.vite/manifest.json").json<
     Record<string, Record<string, string>>
   >(),
@@ -60,15 +60,7 @@ export const highlighter = await createHighlighterCore({
     themes: [vitesseLight],
   }),
   mainStore = reactive({
-    body: computed((): string | undefined =>
-      index?.replace(
-        '<base href="" />',
-        `<base href="" />
-    <script type="importmap">
-${JSON.stringify({ imports: mainStore.staticEntries ?? {} }, null, 1)}
-    </script>`,
-      ),
-    ),
+    body,
     domain: "",
     getModel: async (id: string) => {
       const uri = Uri.parse(`file:///${id}.md`);
@@ -87,12 +79,15 @@ ${JSON.stringify({ imports: mainStore.staticEntries ?? {} }, null, 1)}
           value ||
             `---
 title: Title
-description: Description
+meta:
+  - name: description
+    content: Description
 attrs:
   class:
     - prose
     - max-w-none
 joint: true
+hidden: false
 ---
 `,
           "markdown",
@@ -109,34 +104,6 @@ joint: true
     },
     manifest,
     message: "",
-    putPage: async ({ branch, frontmatter, path }: TAppPage) => {
-      const getHeadTags = async () => {
-        const vueHeadClient = createHead({ disableDefaults: true });
-        vueHeadClient.push(frontmatter);
-        const { headTags } = await renderSSRHead(vueHeadClient);
-        return headTags;
-      };
-      const htm = mainStore.body
-        ?.replace(
-          '<base href="" />',
-          `<base href="${
-            Array(branch.length - 1)
-              .fill("..")
-              .join("/") || "./"
-          }" />`,
-        )
-        .replace(
-          "</head>",
-          `${await getHeadTags()}
-</head>`,
-        );
-      if (htm !== undefined)
-        putObject(
-          path ? `${path}/index.html` : "index.html",
-          htm,
-          "text/html",
-        ).catch(consola.error);
-    },
     putPages: async () => {
       const promises: Promise<void>[] = [];
       oldPages.forEach((url) => {
@@ -146,11 +113,52 @@ joint: true
       await Promise.allSettled(promises);
       await removeEmptyDirectories();
       oldPages.length = 0;
-      (nodes as TAppPage[]).forEach((value) => {
-        const { path } = value;
+      (nodes as TAppPage[]).forEach(({ branch, frontmatter, path }) => {
         if (path !== undefined) {
           oldPages.push(path);
-          void mainStore.putPage(value);
+          const vueHeadClient = createHead({
+            plugins: [
+              TemplateParamsPlugin,
+              AliasSortingPlugin,
+              ...(mainStore.domain
+                ? [
+                    CanonicalPlugin({
+                      canonicalHost: `https://${mainStore.domain}`,
+                    }),
+                  ]
+                : []),
+              InferSeoMetaPlugin(),
+            ],
+          });
+          if (nodes[0]?.frontmatter !== frontmatter)
+            vueHeadClient.push(nodes[0]?.frontmatter);
+          vueHeadClient.push({
+            ...frontmatter,
+            base: {
+              href:
+                Array(branch.length - 1)
+                  .fill("..")
+                  .join("/") || "./",
+            },
+          });
+          void (async () => {
+            if (mainStore.body)
+              try {
+                const { headTags } = await renderSSRHead(vueHeadClient);
+                await putObject(
+                  path ? `${path}/index.html` : "index.html",
+                  mainStore.body.replace(
+                    "<head>",
+                    `<head>
+${headTags}`,
+                  ),
+                  "text/html",
+                );
+              } catch (error) {
+                const { message } = error as Error;
+                consola.error(message);
+              }
+          })();
         }
       });
     },
@@ -170,13 +178,4 @@ joint: true
     },
     rightDrawer: false,
     selected: "",
-    staticEntries: computed(
-      (): null | Record<string, string> =>
-        mainStore.manifest &&
-        Object.fromEntries(
-          Object.values(mainStore.manifest)
-            .filter(({ isStaticEntry }) => isStaticEntry)
-            .map(({ file, name }) => [name, `./${file ?? ""}`]),
-        ),
-    ),
   });

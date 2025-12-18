@@ -162,7 +162,7 @@ const clickAI = () => {
       apiKey.value = data;
     });
   },
-  resizeDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} } = {}) => {
+  resizeDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} }) => {
     if (isFirst) initialDrawerWidth = drawerWidth;
     if (x) {
       const width = initialDrawerWidth - x;
