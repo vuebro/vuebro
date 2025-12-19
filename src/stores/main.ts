@@ -150,7 +150,8 @@ hidden: false
                   mainStore.body.replace(
                     "<head>",
                     `<head>
-${headTags}`,
+${headTags}
+`,
                   ),
                   "text/html",
                 );
