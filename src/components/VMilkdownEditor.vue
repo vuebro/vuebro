@@ -139,7 +139,7 @@ ${markdown}`
 watch($$(selected), async (value) => {
   model = await getModel(value);
   clearUrls();
-  get()?.action(replaceAll(getValue()));
+  get()?.action(replaceAll(getValue(), true));
 });
 
 onUnmounted(clearUrls);
