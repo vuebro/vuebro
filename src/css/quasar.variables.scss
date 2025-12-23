@@ -1,3 +1,5 @@
+@import "nord/src/sass/nord.scss";
+
 // Quasar SCSS (& Sass) Variables
 // --------------------------------------------------
 // To customize the look and feel of this app, you can override
@@ -12,14 +14,17 @@
 // to match your app's branding.
 // Tip: Use the "Theme Builder" on Quasar's documentation website.
 
-$primary   : #1976D2;
-$secondary : #26A69A;
-$accent    : #9C27B0;
+$primary: $nord9;
+$secondary: $nord7;
+$accent: $nord15;
 
-$dark      : #1D1D1D;
-$dark-page : #121212;
+$dark: $nord0;
+$dark-page: $nord0;
 
-$positive  : #21BA45;
-$negative  : #C10015;
-$info      : #31CCEC;
-$warning   : #F2C037;
+$positive: #21ba45;
+$negative: #c10015;
+$info: #31ccec;
+$warning: #f2c037;
+
+$chat-message-received-bg: $nord6;
+$chat-message-sent-bg: $nord6;
