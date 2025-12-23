@@ -9,10 +9,11 @@ import { useStorage } from "@vueuse/core";
 import { split } from "hexo-front-matter";
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { immediate } from "stores/defaults";
-import { mainStore } from "stores/main";
-import { onBeforeUnmount, onMounted, toRefs, useTemplateRef, watch } from "vue";
+import { useMainStore } from "stores/main";
+import { onBeforeUnmount, onMounted, useTemplateRef, watch } from "vue";
 
 let completion: CompletionRegistration | null = null,
   editor: monaco.editor.IStandaloneCodeEditor | null = null,
@@ -37,6 +38,7 @@ const $q = useQuasar(),
         ]);
     } else monaco.editor.removeAllMarkers("frontmatter");
   },
+  mainStore = useMainStore(),
   monacopilot = (value: string) => {
     completion?.deregister();
     completion = null;
@@ -60,7 +62,7 @@ const $q = useQuasar(),
     }
   },
   { getModel } = mainStore,
-  { message, selected } = toRefs(mainStore);
+  { message, selected } = storeToRefs(mainStore);
 
 defineExpose({
   getSelection: () => {

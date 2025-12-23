@@ -32,20 +32,22 @@ q-btn-dropdown.q-mr-xs(auto-close, dropdown-icon="apps", flat, square, stretch)
 import { useStorage } from "@vueuse/core";
 import VFaviconDialog from "components/dialogs/VFaviconDialog.vue";
 import { consola } from "consola/browser";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { cache, persistent } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 import { useI18n } from "vue-i18n";
 
 const $q = useQuasar(),
   ai = useStorage("apiKey", ""),
   cancel = true,
+  mainStore = useMainStore(),
   { getObjectText, putObject } = ioStore,
   { putPages, putSitemap } = mainStore,
   { t } = useI18n();
 
-let domain = $toRef(mainStore, "domain");
+let { domain } = $(storeToRefs(mainStore));
 
 const clickAI = () => {
     $q.dialog({

@@ -103,6 +103,7 @@ import VAiChat from "components/VAiChat.vue";
 import VInteractiveTree from "components/VInteractiveTree.vue";
 import VMilkdownEditor from "components/VMilkdownEditor.vue";
 import VMonacoEditor from "components/VMonacoEditor.vue";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import {
   cancel,
@@ -111,21 +112,22 @@ import {
   mergeDefaults,
   persistent,
 } from "stores/defaults";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 import { toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
   length = 20,
+  mainStore = useMainStore(),
   monaco = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("monaco")),
   { log: defaultLog } = sharedRefs,
   { t } = useI18n(),
   { width } = $(useWindowSize());
 
 const { kvNodes, nodes, tree } = $(sharedRefs);
-const selected = $toRef(mainStore, "selected"),
-  { leftDrawer, rightDrawer } = toRefs(mainStore);
+const { leftDrawer, rightDrawer } = storeToRefs(mainStore),
+  { selected } = $(storeToRefs(mainStore));
 
 rightDrawer.value = false;
 

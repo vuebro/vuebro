@@ -88,11 +88,12 @@ import VOtpDialog from "components/dialogs/VOtpDialog.vue";
 import { consola } from "consola/browser";
 import { AES, Utf8 } from "crypto-es";
 import ContentPage from "pages/ContentPage.vue";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import MainLayout from "src/layouts/MainLayout.vue";
 import { mergeDefaults, persistent } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 import { toRef, triggerRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
@@ -103,9 +104,10 @@ const $q = useQuasar(),
   credential = useStorage("s3", defaultCredentials, localStorage, {
     mergeDefaults,
   }),
-  rightDrawer = toRef(mainStore, "rightDrawer"),
+  mainStore = useMainStore(),
   router = useRouter(),
   { headBucket, setFileSystemDirectoryHandle } = ioStore,
+  { rightDrawer } = storeToRefs(mainStore),
   { t } = useI18n();
 
 const add = () => {

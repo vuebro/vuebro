@@ -6,17 +6,19 @@ router-view
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
 import { editor } from "monaco-editor";
+import { storeToRefs } from "pinia";
 import { cache, writable } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 import { toRef, watch, watchEffect } from "vue";
 
 let tree = $toRef(sharedStore, "tree");
 
 const bucket = toRef(ioStore, "bucket"),
-  domain = toRef(mainStore, "domain"),
+  mainStore = useMainStore(),
   nodes = $toRef(sharedStore, "nodes"),
   { deleteObject, getObjectText, headObject, putObject } = ioStore,
+  { domain } = storeToRefs(mainStore),
   { manifest, putPages } = mainStore;
 
 watchEffect(() => {

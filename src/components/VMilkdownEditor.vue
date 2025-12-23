@@ -11,15 +11,17 @@ import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
 import { useStyleTag } from "@vueuse/core";
 import { split } from "hexo-front-matter";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { immediate } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { highlighter, mainStore } from "stores/main";
+import { highlighter, useMainStore } from "stores/main";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const selected = $toRef(mainStore, "selected"),
-  { getModel } = mainStore;
+const mainStore = useMainStore(),
+  { getModel } = mainStore,
+  { selected } = $(storeToRefs(mainStore));
 
 let front = "",
   model = await getModel(selected);

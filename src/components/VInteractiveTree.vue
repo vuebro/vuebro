@@ -60,16 +60,19 @@ import type { QTree } from "quasar";
 
 import { sharedStore } from "@vuebro/shared";
 import { consola } from "consola/browser";
+import { storeToRefs } from "pinia";
 import { debounce, useQuasar } from "quasar";
 import { cancel, deep, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 import { ref, toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-let selected = $toRef(mainStore, "selected"),
-  state = $ref(false),
-  visible = $ref(false);
+const mainStore = useMainStore();
+
+let state = $ref(false),
+  visible = $ref(false),
+  { selected } = $(storeToRefs(mainStore));
 
 const { kvNodes, nodes } = $(toRefs(sharedStore));
 

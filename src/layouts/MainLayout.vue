@@ -40,14 +40,16 @@ q-layout(view="hHh LpR lff")
 
 <script setup lang="ts">
 import VMainMenu from "components/VMainMenu.vue";
+import { storeToRefs } from "pinia";
 import { useQuasar } from "quasar";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
-import { toRef, toRefs, watch } from "vue";
+import { useMainStore } from "stores/main";
+import { toRef, watch } from "vue";
 
 const $q = useQuasar(),
   bucket = toRef(ioStore, "bucket"),
-  { leftDrawer, rightDrawer } = toRefs(mainStore);
+  mainStore = useMainStore(),
+  { leftDrawer, rightDrawer } = storeToRefs(mainStore);
 
 watch(
   () => $q.dark.isActive,

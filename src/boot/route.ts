@@ -2,9 +2,10 @@ import { defineBoot } from "#q-app/wrappers";
 import { sharedStore } from "@vuebro/shared";
 import routes from "src/router/routes";
 import { ioStore } from "stores/io";
-import { mainStore } from "stores/main";
+import { useMainStore } from "stores/main";
 
 const tree = $toRef(sharedStore, "tree");
+const mainStore = useMainStore();
 
 export default defineBoot(({ router }) => {
   const [route] = routes;
