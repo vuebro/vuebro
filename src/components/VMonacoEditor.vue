@@ -1,5 +1,5 @@
 <template lang="pug">
-.size-full(ref="monacoRef")
+.full-width.full-height(ref="monacoRef")
 </template>
 
 <script setup lang="ts">
@@ -9,6 +9,7 @@ import { useStorage } from "@vueuse/core";
 import { split } from "hexo-front-matter";
 import * as monaco from "monaco-editor";
 import { CompletionCopilot, registerCompletion } from "monacopilot";
+import { useQuasar } from "quasar";
 import { immediate } from "stores/defaults";
 import { mainStore } from "stores/main";
 import { onBeforeUnmount, onMounted, toRefs, useTemplateRef, watch } from "vue";
@@ -18,7 +19,8 @@ let completion: CompletionRegistration | null = null,
   model: monaco.editor.ITextModel | null = null;
 
 const monacoRef = $(useTemplateRef<HTMLElement>("monacoRef"));
-const apiKey = useStorage("apiKey", ""),
+const $q = useQuasar(),
+  apiKey = useStorage("apiKey", ""),
   frontmatter = (value: string) => {
     if (value && model) {
       const { data, prefixSeparator, separator } = split(model.getValue());
@@ -74,6 +76,14 @@ defineExpose({
 
 watch(apiKey, monacopilot);
 watch(message, frontmatter);
+
+watch(
+  () => $q.dark.isActive,
+  (val) => {
+    monaco.editor.setTheme(val ? "nord" : "github-light-default");
+  },
+  { immediate },
+);
 
 onMounted(() => {
   watch(
