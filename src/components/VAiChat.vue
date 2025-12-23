@@ -9,6 +9,7 @@ template(v-if="log")
     )
       div(v-for="({ text }, j) in content", :key="j")
         q-markdown(
+          content-class="line-height-2",
           no-heading-anchor-links,
           no-line-numbers,
           :plugins,
@@ -45,7 +46,7 @@ import mark from "markdown-it-mark";
 import subscript from "markdown-it-sub";
 import superscript from "markdown-it-sup";
 import taskLists from "markdown-it-task-lists";
-import { deep, immediate, mergeDefaults } from "stores/defaults";
+import { deep, mergeDefaults } from "stores/defaults";
 import { nextTick, toRefs, useTemplateRef, watch } from "vue";
 
 const sharedRefs = toRefs(sharedStore),
@@ -85,19 +86,20 @@ const chatMessages = $(
   };
 
 watch(
-  () => [...log.value.messages],
-  async (value, oldValue) => {
-    if (oldValue && value.length > oldValue.length) {
-      await nextTick();
-      scrollToEnd();
-    }
+  log,
+  async () => {
+    await nextTick();
+    scrollToEnd();
   },
-  { deep, flush: "post", immediate },
+  { deep },
 );
 </script>
 
 <style scoped>
 :deep(.q-message-container) > div {
   width: 100%;
+}
+.line-height-2 {
+  line-height: 2;
 }
 </style>
