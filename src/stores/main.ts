@@ -2,7 +2,8 @@ import type { TPage } from "@vuebro/shared";
 
 import mdc from "@shikijs/langs/mdc";
 import vue from "@shikijs/langs/vue";
-import vitesseLight from "@shikijs/themes/vitesse-light";
+import lightTheme from "@shikijs/themes/github-light-default";
+import darkTheme from "@shikijs/themes/nord";
 import { InferSeoMetaPlugin } from "@unhead/addons";
 import { createHead, renderSSRHead } from "@unhead/vue/server";
 import { sharedStore } from "@vuebro/shared";
@@ -57,7 +58,7 @@ const oldPages: string[] = [],
 export const highlighter = await createHighlighterCore({
     engine: createOnigurumaEngine(options),
     langs: [vue, mdc],
-    themes: [vitesseLight],
+    themes: [lightTheme, darkTheme],
   }),
   mainStore = reactive({
     body,
@@ -102,6 +103,7 @@ hidden: false
       }
       return model;
     },
+    leftDrawer: false,
     manifest,
     message: "",
     putPages: async () => {
