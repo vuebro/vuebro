@@ -1,66 +1,61 @@
 <template lang="pug">
 q-drawer(
-  v-model="rightDrawer",
+  v-model="leftDrawer",
   show-if-above,
-  side="right",
-  :width="drawerWidth"
+  side="left",
+  :width="leftDrawerWidth"
 )
-  .column.fit
-    q-tabs.text-grey(
-      v-model="drawerTab",
-      active-color="primary",
-      align="justify",
+  .column.fit.no-wrap(v-if="tree && the")
+    v-interactive-tree
+  q-separator.absolute-right.cursor-ew-resize(
+    v-touch-pan.prevent.mouse.horizontal="resizeLeftDrawer",
+    vertical
+  )
+q-drawer(
+  v-model="rightDrawer",
+  overlay,
+  side="right",
+  :width="rightDrawerWidth"
+)
+  .column.fit.no-wrap(v-if="apiKey")
+    v-ai-chat
+    q-input.q-ma-sm(
+      v-model="message",
+      autofocus,
+      autogrow,
+      class="max-h-1/3",
       dense,
-      indicator-color="primary",
-      narrow-indicator
+      input-class="max-h-full",
+      :label="t('How can I help you today?')",
+      @keyup.ctrl.enter="send"
     )
-      q-tab(label="tree", name="tree")
-      q-tab(label="ai", name="ai")
-    q-separator
-    q-tab-panels.col.fit(v-model="drawerTab", keep-alive)
-      q-tab-panel.column.no-padding(name="tree")
-        v-interactive-tree(v-if="tree && the")
-      q-tab-panel.column.no-padding.justify-center(name="ai")
-        .column.fit.no-wrap(v-if="apiKey")
-          v-ai-chat
-          q-input.q-ma-sm(
-            v-model="message",
-            autofocus,
-            autogrow,
-            class="max-h-1/3",
-            dense,
-            input-class="max-h-full",
-            :label="t('How can I help you today?')",
-            @keyup.ctrl.enter="send"
+      template(#prepend)
+        q-icon.cursor-pointer(name="person")
+          q-tooltip {{ t("Describe AI behavior") }}
+          q-popup-edit(
+            v-slot="scope",
+            v-model="log.system",
+            anchor="bottom end",
+            buttons
           )
-            template(#prepend)
-              q-icon.cursor-pointer(name="person")
-                q-tooltip {{ t("Describe AI behavior") }}
-                q-popup-edit(
-                  v-slot="scope",
-                  v-model="log.system",
-                  anchor="bottom end",
-                  buttons
-                )
-                  q-input(
-                    v-model="scope.value",
-                    autofocus,
-                    dense,
-                    :label="t('Describe AI behavior')",
-                    type="textarea"
-                  )
-            template(#after)
-              q-btn(dense, flat, icon="send", round, @click="send")
-        .self-center.text-center(v-else)
-          q-btn(color="primary", label="AI key", unelevated, @click="clickAI")
-          .q-mt-md {{ t("You need an AI key to use this feature") }}
-  q-separator.bg-separator.absolute-left.-left-px.cursor-ew-resize(
-    v-touch-pan.preserveCursor.prevent.mouse.horizontal="resizeDrawer",
-    class="after:pt-[3px] after:text-center after:rounded-[4px] after:bg-gray-400 after:h-[30px] after:content-['∷'] after:top-1/2 after:absolute after:-translate-y-1/2 after:-left-[5px] after:-right-[5px]",
+            q-input(
+              v-model="scope.value",
+              autofocus,
+              dense,
+              :label="t('Describe AI behavior')",
+              type="textarea"
+            )
+      template(#after)
+        q-btn(dense, flat, icon="send", round, @click="send")
+  .self-center.text-center(v-else)
+    q-btn(color="primary", label="AI key", unelevated, @click="clickAI")
+    .q-mt-md {{ t("You need an AI key to use this feature") }}
+  q-separator.absolute-left.cursor-ew-resize(
+    v-touch-pan.prevent.mouse.horizontal="resizeRightDrawer",
     vertical
   )
 q-page.column.full-height(v-if="the")
-  q-tabs.text-grey(
+  q-tabs(
     v-model="tab",
     active-color="primary",
     align="justify",
@@ -69,17 +64,16 @@ q-page.column.full-height(v-if="the")
     narrow-indicator
   )
     q-tab(label="wysiwyg", name="wysiwyg")
-    q-tab(label="vue", name="vue")
-  q-separator
+    q-tab(label="markdown", name="md")
   q-tab-panels.full-width.col(v-if="selected", v-model="tab")
-    q-tab-panel(name="wysiwyg")
+    q-tab-panel.q-px-none.milkdown(name="wysiwyg")
       Suspense
         milkdown-provider
           v-milkdown-editor.full-height.scroll
         template(#fallback)
           q-inner-loading(showing)
             q-spinner-hourglass
-    q-tab-panel(name="vue")
+    q-tab-panel(name="md")
       Suspense
         v-monaco-editor(ref="monaco")
           template(#fallback)
@@ -99,7 +93,7 @@ import type { TAppPage } from "stores/main";
 import { createMistral } from "@ai-sdk/mistral";
 import { MilkdownProvider } from "@milkdown/vue";
 import { sharedStore } from "@vuebro/shared";
-import { useStorage } from "@vueuse/core";
+import { useStorage, useWindowSize } from "@vueuse/core";
 import {
   extractReasoningMiddleware,
   generateText,
@@ -118,19 +112,22 @@ import {
   persistent,
 } from "stores/defaults";
 import { mainStore } from "stores/main";
-import { ref, toRefs, useTemplateRef, watch } from "vue";
+import { toRefs, useTemplateRef, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const sharedRefs = toRefs(sharedStore);
 const $q = useQuasar(),
-  drawerTab = ref("tree"),
   length = 20,
   monaco = $(useTemplateRef<InstanceType<typeof VMonacoEditor>>("monaco")),
   { log: defaultLog } = sharedRefs,
-  { t } = useI18n();
+  { t } = useI18n(),
+  { width } = $(useWindowSize());
 
 const { kvNodes, nodes, tree } = $(sharedRefs);
-const { rightDrawer, selected } = $(toRefs(mainStore));
+const selected = $toRef(mainStore, "selected"),
+  { leftDrawer, rightDrawer } = toRefs(mainStore);
+
+rightDrawer.value = false;
 
 const apiKey = useStorage("apiKey", ""),
   log = useStorage<TLog>(() => tree[0]?.id ?? "", defaultLog, localStorage, {
@@ -141,10 +138,12 @@ const apiKey = useStorage("apiKey", ""),
     () => (kvNodes[selected] ?? nodes[0]) as TAppPage | undefined,
   );
 
-let initialDrawerWidth = 300,
-  drawerWidth = $ref(initialDrawerWidth),
+let initialLeftDrawerWidth = 300,
+  initialRightDrawerWidth = 300,
+  leftDrawerWidth = $ref(initialLeftDrawerWidth),
   message = $ref(""),
-  mistral: MistralProvider | undefined;
+  mistral: MistralProvider | undefined,
+  rightDrawerWidth = $ref(initialRightDrawerWidth);
 
 const clickAI = () => {
     $q.dialog({
@@ -162,18 +161,27 @@ const clickAI = () => {
       apiKey.value = data;
     });
   },
-  resizeDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} }) => {
-    if (isFirst) initialDrawerWidth = drawerWidth;
+  resizeLeftDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} }) => {
+    if (isFirst) initialLeftDrawerWidth = leftDrawerWidth;
     if (x) {
-      const width = initialDrawerWidth - x;
-      if (width > 300) drawerWidth = width;
+      const drawerWidth = initialLeftDrawerWidth + x;
+      if (drawerWidth > 130 && drawerWidth < width / 3)
+        leftDrawerWidth = drawerWidth;
+    }
+  },
+  resizeRightDrawer: TouchPanValue = ({ isFirst, offset: { x } = {} }) => {
+    if (isFirst) initialRightDrawerWidth = rightDrawerWidth;
+    if (x) {
+      const drawerWidth = initialRightDrawerWidth - x;
+      if (drawerWidth > 130 && drawerWidth < width / 2)
+        rightDrawerWidth = drawerWidth;
     }
   },
   send = async () => {
     if (mistral && message) {
       const content = [{ text: message, type: "text" }],
         { messages, system } = log.value;
-      if (tab === "vue" && monaco) {
+      if (tab === "md" && monaco) {
         const text = (monaco.getSelection() ?? "") as string;
         if (text)
           content.unshift({
@@ -189,8 +197,9 @@ const clickAI = () => {
           messages: messages.toReversed() as ModelMessage[],
           model: wrapLanguageModel({
             middleware: extractReasoningMiddleware({ tagName: "think" }),
-            model: mistral("magistral-medium-latest"),
+            model: mistral("mistral-large-latest"),
           }),
+          providerOptions: { mistral: { safePrompt: true } },
           system,
         });
         messages.unshift({
@@ -211,10 +220,20 @@ watch(
   },
   { immediate },
 );
+
+watch($$(width), (value) => {
+  if (leftDrawer.value && leftDrawerWidth > value / 3)
+    leftDrawerWidth = value / 3;
+  if (rightDrawer.value && rightDrawerWidth > value / 2)
+    rightDrawerWidth = value / 2;
+});
 </script>
 
 <style scoped>
 .q-textarea :deep(.q-field__control) {
   height: 100% !important;
+}
+.cursor-ew-resize {
+  cursor: ew-resize;
 }
 </style>
