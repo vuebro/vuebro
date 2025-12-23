@@ -2,14 +2,14 @@
   display: none;
 }
 
-// body.body--dark .q-message-text {
-//   background-color: $nord1;
-//   color: $nord1;
-// }
+body.body--dark .q-message-text {
+  background-color: $nord1;
+  color: $nord1;
+}
 
-// body.body--dark .q-message-text .q-btn {
-//   color: $nord8;
-// }
+body.body--dark .q-message-text .q-btn {
+  color: $nord8;
+}
 
 body.body--light .q-header {
   color: $nord3;
