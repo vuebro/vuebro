@@ -1,10 +1,23 @@
 <template lang="pug">
-q-layout(view="hHh Lpr lff")
+q-layout(view="hHh LpR lff")
   q-header
     q-toolbar
+      q-btn(
+        :class="{ invisible: !bucket }",
+        dense,
+        flat,
+        icon="menu",
+        round,
+        @click="leftDrawer = !leftDrawer"
+      )
       q-toolbar-title
         q-avatar(icon="img:favicon.svg", size="xl")
         | VueBro
+      q-toggle(
+        v-model="$q.dark.isActive",
+        checked-icon="dark_mode",
+        unchecked-icon="light_mode"
+      )
       q-chip.q-mr-md(
         v-if="bucket",
         icon="language",
@@ -27,10 +40,19 @@ q-layout(view="hHh Lpr lff")
 
 <script setup lang="ts">
 import VMainMenu from "components/VMainMenu.vue";
+import { useQuasar } from "quasar";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
-import { toRef } from "vue";
+import { toRef, toRefs, watch } from "vue";
 
-const bucket = toRef(ioStore, "bucket"),
-  rightDrawer = toRef(mainStore, "rightDrawer");
+const $q = useQuasar(),
+  bucket = toRef(ioStore, "bucket"),
+  { leftDrawer, rightDrawer } = toRefs(mainStore);
+
+watch(
+  () => $q.dark.isActive,
+  (value) => {
+    $q.dark.set(value);
+  },
+);
 </script>
