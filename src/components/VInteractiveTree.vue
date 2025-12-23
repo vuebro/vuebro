@@ -1,5 +1,5 @@
 <template lang="pug">
-q-page-sticky(:offset="[18, 18]", position="bottom-right")
+q-page-sticky(:offset="[-21, 21]", position="bottom-left")
   Transition(
     appear,
     enter-active-class="animated zoomIn",
@@ -10,7 +10,8 @@ q-page-sticky(:offset="[18, 18]", position="bottom-right")
       v-model="state",
       color="accent",
       direction="up",
-      icon="add"
+      icon="add",
+      padding="sm"
     )
       q-fab-action(color="primary", icon="note", @click="clickAdd")
       q-fab-action(color="primary", icon="delete", @click="clickRemove")
@@ -27,6 +28,7 @@ q-page-sticky(:offset="[18, 18]", position="bottom-right")
     v-if="nodes[0]",
     ref="qtree",
     v-model:expanded="expanded",
+    dense,
     no-selection-unset,
     node-key="id",
     :nodes="[nodes[0]]",
@@ -39,7 +41,7 @@ q-page-sticky(:offset="[18, 18]", position="bottom-right")
         @dblclick="prop.node.contenteditable = true",
         @keypress.stop
       )
-        q-input.full-width.min-w-96(
+        q-input.full-width(
           v-model.trim="prop.node.name",
           :bg-color="prop.node.id === selected ? 'primary' : undefined",
           dense,
