@@ -39,15 +39,10 @@ export default defineConfig(() => ({
         },
         { server: false },
       ],
-      ["@unocss/vite"],
       ["@vue-macros/reactivity-transform/vite"],
     ],
   },
-  css: [
-    "app.css",
-    "~@milkdown/crepe/theme/common/style.css",
-    "~@milkdown/crepe/theme/frame.css",
-  ],
+  css: ["app.scss", "~@milkdown/crepe/theme/common/style.css"],
   devServer: { open: false },
   electron: {
     builder: {
@@ -59,6 +54,6 @@ export default defineConfig(() => ({
     bundler: "builder",
     preloadScripts: ["electron-preload"],
   },
-  extras: ["mdi-v7", "roboto-font", "material-icons"],
-  framework: { plugins: ["Dialog", "Notify"] },
+  extras: ["material-icons"],
+  framework: { config: { dark: "auto" }, plugins: ["Dialog", "Notify"] },
 }));
