@@ -4,11 +4,15 @@ Milkdown
 
 <script setup lang="ts">
 import { Crepe } from "@milkdown/crepe";
+import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
+import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
+import { useStyleTag } from "@vueuse/core";
 import { split } from "hexo-front-matter";
 import { useQuasar } from "quasar";
+import { immediate } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { highlighter, mainStore } from "stores/main";
 import { onUnmounted, watch } from "vue";
@@ -50,7 +54,10 @@ const $q = useQuasar(),
           const div = document.createElement("div");
           div.innerHTML = highlighter.codeToHtml(node.attrs.value, {
             lang: "vue",
-            theme: "vitesse-light",
+            themes: {
+              dark: "nord",
+              light: "github-light-default",
+            },
           });
           div.classList = "rounded-borders q-card--bordered";
           return [
@@ -66,6 +73,7 @@ const $q = useQuasar(),
       };
     };
   }),
+  { css } = useStyleTag($q.dark.isActive ? darkTheme : lightTheme),
   { getObjectBlob, headObject, putObject } = ioStore,
   { get } = useEditor((root) => {
     const crepe = new Crepe({
@@ -141,6 +149,14 @@ watch($$(selected), async (value) => {
   clearUrls();
   get()?.action(replaceAll(getValue(), true));
 });
+
+watch(
+  () => $q.dark.isActive,
+  (value) => {
+    css.value = value ? darkTheme : lightTheme;
+  },
+  { immediate },
+);
 
 onUnmounted(clearUrls);
 </script>
