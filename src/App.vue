@@ -10,8 +10,6 @@ import { cache, writable } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { mainStore } from "stores/main";
 import { toRef, watch, watchEffect } from "vue";
-// eslint-disable-next-line import-x/no-unresolved
-import "virtual:uno.css";
 
 let tree = $toRef(sharedStore, "tree");
 
