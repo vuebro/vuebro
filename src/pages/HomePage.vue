@@ -53,7 +53,7 @@ q-page.column
     q-img.col.rounded-borders(no-spinner, src="~/assets/bg.jpg")
       q-card.absolute-center.backdrop-blur-sm
         q-card-section
-          .text-h5 VueBro
+          .text-h6 VueBro
         q-card-section
           q-timeline(color="black", layout="comfortable", side="left")
             q-timeline-entry(icon="home", :title="t('Homepage')")
