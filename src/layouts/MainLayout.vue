@@ -13,18 +13,17 @@ q-layout(view="hHh LpR lff")
       q-toolbar-title
         q-avatar(icon="img:favicon.svg", size="xl")
         | VueBro
-      q-toggle(
-        v-model="$q.dark.isActive",
-        checked-icon="dark_mode",
-        unchecked-icon="light_mode"
-      )
-      q-chip.q-mr-md(
+      q-chip.q-mx-md(
         v-if="bucket",
         icon="language",
         :label="bucket",
         :ripple="false"
       )
-      q-separator(v-if="bucket", dark, vertical)
+      q-toggle(
+        v-model="$q.dark.isActive",
+        checked-icon="dark_mode",
+        unchecked-icon="light_mode"
+      )
       v-main-menu(v-if="bucket")
       q-btn(
         dense,
