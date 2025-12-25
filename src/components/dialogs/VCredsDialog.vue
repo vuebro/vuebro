@@ -110,15 +110,15 @@ const $q = useQuasar(),
   bucketRef = useTemplateRef<QInput>("bucketRef"),
   click = (value: Record<string, null | string>) => {
     if (Bucket)
-      if (model !== Bucket && Reflect.has(credential, Bucket))
+      if (model !== Bucket && Reflect.has(credential.value, Bucket))
         $q.dialog({
           message: t("That account already exists"),
           title: t("Confirm"),
         });
       else {
         if (model && model !== Bucket)
-          Reflect.deleteProperty(credential, model);
-        Reflect.defineProperty(credential, Bucket, {
+          Reflect.deleteProperty(credential.value, model);
+        Reflect.defineProperty(credential.value, Bucket, {
           configurable,
           enumerable,
           value,
