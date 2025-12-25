@@ -11,6 +11,6 @@ export default [
       },
     ],
     component: MainLayout,
-    path: "/:pathMatch(.*)*",
+    path: "/",
   },
 ];
