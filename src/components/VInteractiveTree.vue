@@ -1,5 +1,5 @@
 <template lang="pug">
-q-page-sticky(:offset="[-21, 21]", position="bottom-left")
+q-page-sticky(:offset="[-29, 29]", position="bottom-left")
   Transition(
     appear,
     enter-active-class="animated zoomIn",
@@ -10,8 +10,7 @@ q-page-sticky(:offset="[-21, 21]", position="bottom-left")
       v-model="state",
       color="accent",
       direction="up",
-      icon="add",
-      padding="sm"
+      icon="add"
     )
       q-fab-action(color="primary", icon="note", @click="clickAdd")
       q-fab-action(color="primary", icon="delete", @click="clickRemove")
