@@ -76,8 +76,7 @@ export const deleteObject = async (Bucket: string, Key: string) => {
       await s3Client.send(new HeadBucketCommand({ Bucket }));
     } catch (err) {
       setS3Client();
-      const { message } = err as Error;
-      throw new Error(message);
+      throw new Error(err as string);
     }
   },
   headObject = async (
