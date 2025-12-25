@@ -2,27 +2,53 @@
   display: none;
 }
 
-body.body--dark .q-message-text {
+.body--dark .q-message-text {
   background-color: $nord1;
   color: $nord1;
 }
 
-body.body--dark .q-message-text .q-btn {
+.body--dark .q-message-text .q-btn {
   color: $nord8;
 }
 
-body.body--light .q-header {
+.body--light {
   color: $nord3;
+}
+
+.body--dark {
+  color: $nord6;
+}
+
+.body--light a {
+  color: $nord10;
+  text-decoration: none;
+}
+
+.body--dark a {
+  color: $nord8;
+  text-decoration: none;
+}
+
+a:hover {
+  color: $nord9;
+}
+
+.body--light .q-header {
+  color: $nord2;
   background-color: white;
 }
 
-body.body--dark .q-header {
+.body--dark .q-header {
   color: $nord6;
   background-color: $nord0;
 }
 
-body.body--dark .shiki,
-body.body--dark .shiki span {
+.q-chip--dark {
+  background-color: $nord9;
+}
+
+.body--dark .shiki,
+.body--dark .shiki span {
   color: var(--shiki-dark) !important;
   background-color: var(--shiki-dark-bg) !important;
   /* Optional, if you also want font styles */
