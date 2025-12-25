@@ -33,7 +33,7 @@ import { AES } from "crypto-es";
 import { useDialogPluginComponent } from "quasar";
 import { computed, watch } from "vue";
 
-const { model } = defineProps<{ model: string }>();
+const { model } = defineProps<{ model: string | undefined }>();
 
 const fields = $ref<QInput[]>([]),
   fieldValues = $ref<number[]>([]),
@@ -67,7 +67,7 @@ watch(
   { deep: true },
 );
 
-watch(selected, (value) => {
+watch($$(selected), (value) => {
   fields[value]?.select();
 });
 </script>
