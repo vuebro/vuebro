@@ -3,10 +3,12 @@ Milkdown
 </template>
 
 <script setup lang="ts">
+import type { EditorView } from "prosemirror-view";
+
 import { Crepe } from "@milkdown/crepe";
 import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
 import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
-import { editorViewCtx, parserCtx, serializerCtx } from "@milkdown/kit/core";
+import { parserCtx, serializerCtx } from "@milkdown/kit/core";
 import { Ctx } from "@milkdown/kit/ctx";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { cloneTr } from "@milkdown/kit/prose";
@@ -28,10 +30,10 @@ import { useI18n } from "vue-i18n";
 
 const mainStore = useMainStore(),
   { getModel } = mainStore,
-  { selected } = $(storeToRefs(mainStore));
+  { selected } = storeToRefs(mainStore);
 
 let front = "",
-  model = await getModel(selected);
+  model = await getModel(selected.value);
 
 const fetchAIHint = async (prompt: string) => {
   // const data: Record<string, string> = { prompt };
@@ -44,103 +46,26 @@ const fetchAIHint = async (prompt: string) => {
   return Promise.resolve(res.hint);
 };
 
-const copilotKey = new PluginKey("MilkdownCopilot");
+const key = new PluginKey("MilkdownCopilot");
 
-const getHint = (ctx: Ctx) => {
-  const view = ctx.get(editorViewCtx);
-  const { state } = view;
-  const tr = state.tr;
-  const { from } = tr.selection;
-  const slice = tr.doc.slice(0, from);
-  const serializer = ctx.get(serializerCtx);
-  const doc = view.state.schema.topNodeType.createAndFill(
-    undefined,
-    slice.content,
-  );
-  if (!doc) return;
-  const markdown = serializer(doc);
-  void (async () => {
-    const hint = await fetchAIHint(markdown);
-    const tr = cloneTr(view.state.tr);
-    view.dispatch(tr.setMeta(copilotKey, hint));
-  })();
-};
-
-const applyHint = (ctx: Ctx) => {
-  const view = ctx.get(editorViewCtx);
-  const { state } = view;
-  const tr = state.tr;
-  const { message } = copilotKey.getState(state);
-  const parser = ctx.get(parserCtx);
-  const slice = parser(message);
-  const dom = DOMSerializer.fromSchema(state.schema).serializeFragment(
-    slice.content,
-  );
-  const domParser = DOMParser.fromSchema(state.schema);
-  view.dispatch(
-    tr.setMeta(copilotKey, "").replaceSelection(domParser.parseSlice(dom)),
-  );
-};
-
-const hideHint = (ctx: Ctx) => {
-  const view = ctx.get(editorViewCtx);
-  const { state } = view;
-  const tr = state.tr;
-  view.dispatch(tr.setMeta(copilotKey, ""));
-};
-
-const copilotPlugin = $prose((ctx) => {
-  return new Plugin({
-    key: copilotKey,
-    props: {
-      decorations(state) {
-        return copilotKey.getState(state).deco;
-      },
-      handleKeyDown(_view, event) {
-        if (event.key === "Tab") {
-          event.preventDefault();
-          applyHint(ctx);
-          return;
-        }
-        if (event.key === "Enter" || event.code === "Space") {
-          getHint(ctx);
-          return;
-        }
-
-        hideHint(ctx);
-      },
-    },
+const getHint = async ({ get }: Ctx, view: EditorView) => {
+  const {
+    dispatch,
     state: {
-      apply(tr, value, _prevState, state) {
-        const message = tr.getMeta(copilotKey);
-        if (typeof message !== "string") return value;
-        if (message.length === 0) {
-          return {
-            deco: DecorationSet.empty,
-            message: "",
-          };
-        }
-        const { to } = tr.selection;
-        const widget = Decoration.widget(to + 1, () => {
-          const dom = document.createElement("pre");
-          dom.className = "bg-slate-100 border-slate-400 text-gray-800";
-          dom.innerHTML = message;
-          return dom;
-        });
-        return {
-          deco: DecorationSet.create(state.doc, [widget]),
-          message,
-        };
-      },
-      init() {
-        return {
-          deco: DecorationSet.empty,
-          message: "",
-        };
+      schema: { topNodeType },
+      tr: {
+        doc,
+        selection: { from },
       },
     },
-  });
-});
+  } = view;
+  const { content } = doc.slice(0, from);
+  const node = topNodeType.createAndFill(undefined, content);
+  if (node) {
+    const hint = await fetchAIHint(get(serializerCtx)(node));
+    dispatch(cloneTr(view.state.tr).setMeta(key, hint));
+  }
+};
 
 const urls = new Map(),
   yaml = "---",
@@ -234,7 +159,7 @@ const $q = useQuasar(),
             return filePath;
           },
           proxyDomURL: async (url: string) => {
-            if (!urls.has(url) && !/^(?:[a-z]+:)?\/\//i.test(url)) {
+            if (!urls.has(url) && !URL.canParse(url)) {
               const image = await getObjectBlob(url);
               if (image.size) urls.set(url, URL.createObjectURL(image));
             }
@@ -258,11 +183,85 @@ ${markdown}`
       });
     });
     void crepe.editor.remove(htmlSchema);
-    crepe.editor.use(htmlSchemaExtended).use(copilotPlugin);
+    crepe.editor.use(htmlSchemaExtended).use(
+      $prose(
+        (ctx) =>
+          new Plugin({
+            key,
+            props: {
+              decorations: (state) => key.getState(state).deco,
+              handleKeyDown(view, event) {
+                switch (event.key) {
+                  case "Enter":
+                    void getHint(ctx, view);
+                    break;
+                  case "Tab": {
+                    const { dispatch, state } = view;
+                    const { schema, tr } = state;
+                    const { message } = key.getState(state);
+                    const { content } = ctx.get(parserCtx)(message);
+                    event.preventDefault();
+                    dispatch(
+                      tr
+                        .setMeta(key, "")
+                        .replaceSelection(
+                          DOMParser.fromSchema(schema).parseSlice(
+                            DOMSerializer.fromSchema(schema).serializeFragment(
+                              content,
+                            ),
+                          ),
+                        ),
+                    );
+                    break;
+                  }
+                  default: {
+                    const {
+                      dispatch,
+                      state: { tr },
+                    } = view;
+                    dispatch(tr.setMeta(key, ""));
+                  }
+                }
+              },
+              handleTextInput(view, _from, _to, text) {
+                if (text === " ") void getHint(ctx, view);
+              },
+            },
+            state: {
+              apply(tr, value, _prevState, state) {
+                const message = tr.getMeta(key),
+                  {
+                    selection: { to },
+                  } = tr;
+                return typeof message === "string"
+                  ? {
+                      deco: message.length
+                        ? DecorationSet.create(state.doc, [
+                            Decoration.widget(to + 1, () => {
+                              const dom = document.createElement("pre");
+                              dom.className =
+                                "bg-slate-100 border-slate-400 text-gray-800";
+                              dom.innerHTML = message;
+                              return dom;
+                            }),
+                          ])
+                        : DecorationSet.empty,
+                      message,
+                    }
+                  : value;
+              },
+              init: () => ({
+                deco: DecorationSet.empty,
+                message: "",
+              }),
+            },
+          }),
+      ),
+    );
     return crepe;
   });
 
-watch($$(selected), async (value) => {
+watch(selected, async (value) => {
   model = await getModel(value);
   clearUrls();
   get()?.action(replaceAll(getValue(), true));
