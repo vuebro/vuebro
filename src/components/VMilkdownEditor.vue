@@ -6,7 +6,14 @@ Milkdown
 import { Crepe } from "@milkdown/crepe";
 import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
 import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
+import { editorViewCtx, parserCtx, serializerCtx } from "@milkdown/kit/core";
+import { Ctx } from "@milkdown/kit/ctx";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
+import { cloneTr } from "@milkdown/kit/prose";
+import { DOMParser, DOMSerializer } from "@milkdown/kit/prose/model";
+import { Plugin, PluginKey } from "@milkdown/kit/prose/state";
+import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
+import { $prose } from "@milkdown/kit/utils";
 import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
 import { useStyleTag } from "@vueuse/core";
@@ -25,6 +32,115 @@ const mainStore = useMainStore(),
 
 let front = "",
   model = await getModel(selected);
+
+const fetchAIHint = async (prompt: string) => {
+  // const data: Record<string, string> = { prompt };
+  // const response = await fetch("/api", {
+  //   body: JSON.stringify(data),
+  //   method: "POST",
+  // });
+  // const res = (await response.json()) as { hint: string };
+  const res = { hint: prompt };
+  return Promise.resolve(res.hint);
+};
+
+const copilotKey = new PluginKey("MilkdownCopilot");
+
+const getHint = (ctx: Ctx) => {
+  const view = ctx.get(editorViewCtx);
+  const { state } = view;
+  const tr = state.tr;
+  const { from } = tr.selection;
+  const slice = tr.doc.slice(0, from);
+  const serializer = ctx.get(serializerCtx);
+  const doc = view.state.schema.topNodeType.createAndFill(
+    undefined,
+    slice.content,
+  );
+  if (!doc) return;
+  const markdown = serializer(doc);
+  void (async () => {
+    const hint = await fetchAIHint(markdown);
+    const tr = cloneTr(view.state.tr);
+    view.dispatch(tr.setMeta(copilotKey, hint));
+  })();
+};
+
+const applyHint = (ctx: Ctx) => {
+  const view = ctx.get(editorViewCtx);
+  const { state } = view;
+  const tr = state.tr;
+  const { message } = copilotKey.getState(state);
+  const parser = ctx.get(parserCtx);
+  const slice = parser(message);
+  const dom = DOMSerializer.fromSchema(state.schema).serializeFragment(
+    slice.content,
+  );
+  const domParser = DOMParser.fromSchema(state.schema);
+  view.dispatch(
+    tr.setMeta(copilotKey, "").replaceSelection(domParser.parseSlice(dom)),
+  );
+};
+
+const hideHint = (ctx: Ctx) => {
+  const view = ctx.get(editorViewCtx);
+  const { state } = view;
+  const tr = state.tr;
+  view.dispatch(tr.setMeta(copilotKey, ""));
+};
+
+const copilotPlugin = $prose((ctx) => {
+  return new Plugin({
+    key: copilotKey,
+    props: {
+      decorations(state) {
+        return copilotKey.getState(state).deco;
+      },
+      handleKeyDown(_view, event) {
+        if (event.key === "Tab") {
+          event.preventDefault();
+          applyHint(ctx);
+          return;
+        }
+        if (event.key === "Enter" || event.code === "Space") {
+          getHint(ctx);
+          return;
+        }
+
+        hideHint(ctx);
+      },
+    },
+    state: {
+      apply(tr, value, _prevState, state) {
+        const message = tr.getMeta(copilotKey);
+        if (typeof message !== "string") return value;
+        if (message.length === 0) {
+          return {
+            deco: DecorationSet.empty,
+            message: "",
+          };
+        }
+        const { to } = tr.selection;
+        const widget = Decoration.widget(to + 1, () => {
+          const dom = document.createElement("pre");
+          dom.className = "bg-slate-100 border-slate-400 text-gray-800";
+          dom.innerHTML = message;
+          return dom;
+        });
+        return {
+          deco: DecorationSet.create(state.doc, [widget]),
+          message,
+        };
+      },
+      init() {
+        return {
+          deco: DecorationSet.empty,
+          message: "",
+        };
+      },
+    },
+  });
+});
 
 const urls = new Map(),
   yaml = "---",
@@ -142,7 +258,7 @@ ${markdown}`
       });
     });
     void crepe.editor.remove(htmlSchema);
-    crepe.editor.use(htmlSchemaExtended);
+    crepe.editor.use(htmlSchemaExtended).use(copilotPlugin);
     return crepe;
   });
 
