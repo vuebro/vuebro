@@ -34,7 +34,6 @@ import type { ComponentPublicInstance } from "vue";
 
 import { createMistral } from "@ai-sdk/mistral";
 import { Chat } from "@ai-sdk/vue";
-import mermaid from "@datatraccorporation/markdown-it-mermaid";
 import { useStorage } from "@vueuse/core";
 import { convertToModelMessages, streamText } from "ai";
 import abbreviation from "markdown-it-abbr";
@@ -97,7 +96,6 @@ const apiKey = useStorage("apiKey", ""),
     transport,
   }),
   plugins = [
-    mermaid,
     abbreviation,
     deflist,
     emoji,
