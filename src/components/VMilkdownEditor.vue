@@ -3,8 +3,11 @@ Milkdown
 </template>
 
 <script setup lang="ts">
+import type { LanguageModel } from "ai";
+import type { EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
+import { createMistral } from "@ai-sdk/mistral";
 import { Crepe } from "@milkdown/crepe";
 import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
 import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
@@ -18,67 +21,78 @@ import { Decoration, DecorationSet } from "@milkdown/kit/prose/view";
 import { $prose } from "@milkdown/kit/utils";
 import { replaceAll } from "@milkdown/utils";
 import { Milkdown, useEditor } from "@milkdown/vue";
-import { useStyleTag } from "@vueuse/core";
+import { useStorage, useStyleTag } from "@vueuse/core";
+import { generateText } from "ai";
 import { split } from "hexo-front-matter";
 import { storeToRefs } from "pinia";
-import { useQuasar } from "quasar";
-import { immediate } from "stores/defaults";
+import { debounce, useQuasar } from "quasar";
+import { cancel, immediate, persistent, second } from "stores/defaults";
 import { ioStore } from "stores/io";
 import { highlighter, useMainStore } from "stores/main";
 import { onUnmounted, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const mainStore = useMainStore(),
+/* -------------------------------------------------------------------------- */
+
+const $q = useQuasar(),
+  apiKey = useStorage("apiKey", ""),
+  dark = "nord",
+  deco = DecorationSet.empty,
+  key = new PluginKey("MilkdownCopilot"),
+  lang = "vue",
+  light = "github-light-default",
+  mainStore = useMainStore(),
+  message = "",
+  system =
+    "You are an intelligent autocomplete engine. If given a partial phrase, return a smart suggestion that completes it meaningfully; otherwise, if the given phrase ends with sentence-ending punctuation (., !, ?), start a new one. Output only the raw text to be inserted at the cursor location without any additional text, comments, or content before or after the cursor.",
+  themes = { dark, light },
+  urls = new Map(),
+  yaml = "---";
+
+/* -------------------------------------------------------------------------- */
+
+const { css } = useStyleTag($q.dark.isActive ? darkTheme : lightTheme),
   { getModel } = mainStore,
-  { selected } = storeToRefs(mainStore);
+  { getObjectBlob, headObject, putObject } = ioStore,
+  { selected } = storeToRefs(mainStore),
+  { t } = useI18n();
+
+/* -------------------------------------------------------------------------- */
 
 let front = "",
-  model = await getModel(selected.value);
+  model: LanguageModel | undefined,
+  textModel = await getModel(selected.value);
 
-const fetchAIHint = async (prompt: string) => {
-  // const data: Record<string, string> = { prompt };
-  // const response = await fetch("/api", {
-  //   body: JSON.stringify(data),
-  //   method: "POST",
-  // });
-  // const res = (await response.json()) as { hint: string };
-  const res = { hint: prompt };
-  return Promise.resolve(res.hint);
-};
+/* -------------------------------------------------------------------------- */
 
-const key = new PluginKey("MilkdownCopilot");
-
-const getHint = async ({ get }: Ctx, view: EditorView) => {
-  const {
-    dispatch,
-    state: {
-      schema: { topNodeType },
-      tr: {
-        doc,
-        selection: { from },
-      },
-    },
-  } = view;
-  const { content } = doc.slice(0, from);
-  const node = topNodeType.createAndFill(undefined, content);
-  if (node) {
-    const hint = await fetchAIHint(get(serializerCtx)(node));
-    dispatch(cloneTr(view.state.tr).setMeta(key, hint));
-  }
-};
-
-const urls = new Map(),
-  yaml = "---",
-  { t } = useI18n();
-const $q = useQuasar(),
-  clearUrls = () => {
+const clearUrls = () => {
     [...urls.values()].forEach((url) => {
       URL.revokeObjectURL(url);
     });
     urls.clear();
   },
+  decorations = (state: EditorState) => key.getState(state).deco,
+  getHint = async ({ get }: Ctx, view: EditorView) => {
+    const {
+      dispatch,
+      state: {
+        schema: { topNodeType },
+        tr: {
+          doc,
+          selection: { from },
+        },
+      },
+    } = view;
+    const { content } = doc.slice(0, from);
+    const node = topNodeType.createAndFill(undefined, content);
+    if (node && model) {
+      const prompt = get(serializerCtx)(node);
+      const { text } = await generateText({ model, prompt, system });
+      dispatch(cloneTr(view.state.tr).setMeta(key, text));
+    }
+  },
   getValue = () => {
-    const value = model.getValue(),
+    const value = textModel.getValue(),
       { content, data, prefixSeparator, separator } = split(value);
     if (data && separator === yaml && prefixSeparator) {
       front = data;
@@ -88,19 +102,76 @@ const $q = useQuasar(),
       return value;
     }
   },
-  htmlSchemaExtended = htmlSchema.extendSchema((prev) => {
-    return (ctx) => {
-      const baseSchema = prev(ctx);
-      return {
-        ...baseSchema,
+  init = () => ({ deco, message }),
+  onUpload = async (file: File) => {
+    const { name, type } = file;
+    const filePath = `uploads/${name}`,
+      message = t("The file is already exist, do you want to replace it?"),
+      title = t("Confirm");
+
+    try {
+      await headObject(filePath);
+      await new Promise((resolve, reject) => {
+        $q.dialog({ cancel, message, persistent, title })
+          .onOk(() => {
+            reject(new Error());
+          })
+          .onCancel(() => {
+            resolve(undefined);
+          });
+      });
+      urls.set(filePath, URL.createObjectURL(await getObjectBlob(filePath)));
+    } catch {
+      void putObject(filePath, new Uint8Array(await file.arrayBuffer()), type);
+      urls.set(filePath, URL.createObjectURL(file));
+    }
+    return filePath;
+  },
+  proxyDomURL = async (url: string) => {
+    if (!urls.has(url) && !URL.canParse(url)) {
+      const image = await getObjectBlob(url);
+      if (image.size) urls.set(url, URL.createObjectURL(image));
+    }
+    return urls.get(url) ?? url;
+  };
+
+/* -------------------------------------------------------------------------- */
+
+const featureConfigs = {
+  [Crepe.Feature.ImageBlock]: { onUpload, proxyDomURL },
+};
+
+/* -------------------------------------------------------------------------- */
+
+const { get } = useEditor((root) => {
+  const defaultValue = getValue(),
+    crepe = new Crepe({ defaultValue, featureConfigs, root });
+
+  crepe.on((api) => {
+    api.markdownUpdated((ctx, markdown) => {
+      textModel.setValue(
+        front
+          ? `${yaml}
+${front}
+${yaml}
+
+${markdown}`
+          : markdown,
+      );
+    });
+  });
+
+  void crepe.editor.remove(htmlSchema);
+
+  crepe.editor
+    .use(
+      htmlSchema.extendSchema((prev) => (ctx) => ({
+        ...prev(ctx),
         toDOM: (node) => {
           const div = document.createElement("div");
           div.innerHTML = highlighter.codeToHtml(node.attrs.value, {
-            lang: "vue",
-            themes: {
-              dark: "nord",
-              light: "github-light-default",
-            },
+            lang,
+            themes,
           });
           div.classList = "rounded-borders q-card--bordered";
           return [
@@ -113,156 +184,87 @@ const $q = useQuasar(),
             div,
           ];
         },
-      };
-    };
-  }),
-  { css } = useStyleTag($q.dark.isActive ? darkTheme : lightTheme),
-  { getObjectBlob, headObject, putObject } = ioStore,
-  { get } = useEditor((root) => {
-    const crepe = new Crepe({
-      defaultValue: getValue(),
-      featureConfigs: {
-        [Crepe.Feature.ImageBlock]: {
-          onUpload: async (file) => {
-            const { name, type } = file;
-            const filePath = `uploads/${name}`;
-            try {
-              await headObject(filePath);
-              await new Promise((resolve, reject) => {
-                $q.dialog({
-                  cancel: true,
-                  message: t(
-                    "The file is already exist, do you want to replace it?",
-                  ),
-                  persistent: true,
-                  title: t("Confirm"),
-                })
-                  .onOk(() => {
-                    reject(new Error());
-                  })
-                  .onCancel(() => {
-                    resolve(undefined);
-                  });
-              });
-              urls.set(
-                filePath,
-                URL.createObjectURL(await getObjectBlob(filePath)),
-              );
-            } catch {
-              void putObject(
-                filePath,
-                new Uint8Array(await file.arrayBuffer()),
-                type,
-              );
-              urls.set(filePath, URL.createObjectURL(file));
-            }
-            return filePath;
-          },
-          proxyDomURL: async (url: string) => {
-            if (!urls.has(url) && !URL.canParse(url)) {
-              const image = await getObjectBlob(url);
-              if (image.size) urls.set(url, URL.createObjectURL(image));
-            }
-            return urls.get(url) ?? url;
-          },
-        },
-      },
-      root,
-    });
-    crepe.on((listener) => {
-      listener.markdownUpdated((ctx, markdown) => {
-        model.setValue(
-          front
-            ? `${yaml}
-${front}
-${yaml}
-
-${markdown}`
-            : markdown,
-        );
-      });
-    });
-    void crepe.editor.remove(htmlSchema);
-    crepe.editor.use(htmlSchemaExtended).use(
+      })),
+    )
+    .use(
       $prose(
         (ctx) =>
           new Plugin({
             key,
             props: {
-              decorations: (state) => key.getState(state).deco,
+              decorations,
               handleKeyDown(view, event) {
+                const { dispatch, state } = view,
+                  { message } = key.getState(state),
+                  { schema, tr } = state;
+                const { content } = ctx.get(parserCtx)(message);
+
+                dispatch(tr.setMeta(key, ""));
                 switch (event.key) {
                   case "Enter":
                     void getHint(ctx, view);
                     break;
-                  case "Tab": {
-                    const { dispatch, state } = view;
-                    const { schema, tr } = state;
-                    const { message } = key.getState(state);
-                    const { content } = ctx.get(parserCtx)(message);
+                  case "Tab":
                     event.preventDefault();
                     dispatch(
-                      tr
-                        .setMeta(key, "")
-                        .replaceSelection(
-                          DOMParser.fromSchema(schema).parseSlice(
-                            DOMSerializer.fromSchema(schema).serializeFragment(
-                              content,
-                            ),
+                      tr.replaceSelection(
+                        DOMParser.fromSchema(schema).parseSlice(
+                          DOMSerializer.fromSchema(schema).serializeFragment(
+                            content,
                           ),
                         ),
+                      ),
                     );
-                    break;
-                  }
-                  default: {
-                    const {
-                      dispatch,
-                      state: { tr },
-                    } = view;
-                    dispatch(tr.setMeta(key, ""));
-                  }
+                    return true;
                 }
               },
-              handleTextInput(view, _from, _to, text) {
+              handleTextInput: debounce((view, from, to, text) => {
                 if (text === " ") void getHint(ctx, view);
-              },
+              }, second),
             },
             state: {
-              apply(tr, value, _prevState, state) {
+              apply(tr, value, prevState, { doc, schema }) {
                 const message = tr.getMeta(key),
+                  { content } = ctx.get(parserCtx)(message),
                   {
-                    selection: { to },
+                    selection: {
+                      $anchor: { parentOffset },
+                      to,
+                    },
                   } = tr;
                 return typeof message === "string"
                   ? {
                       deco: message.length
-                        ? DecorationSet.create(state.doc, [
-                            Decoration.widget(to + 1, () => {
-                              const dom = document.createElement("pre");
-                              dom.className =
-                                "bg-slate-100 border-slate-400 text-gray-800";
-                              dom.innerHTML = message;
-                              return dom;
-                            }),
+                        ? DecorationSet.create(doc, [
+                            Decoration.widget(
+                              to + Number(!parentOffset),
+                              DOMSerializer.fromSchema(
+                                schema,
+                              ).serializeFragment(
+                                content,
+                                {},
+                                document.createElement("pre"),
+                              ),
+                            ),
                           ])
                         : DecorationSet.empty,
                       message,
                     }
                   : value;
               },
-              init: () => ({
-                deco: DecorationSet.empty,
-                message: "",
-              }),
+              init,
             },
           }),
       ),
     );
-    return crepe;
-  });
+
+  return crepe;
+});
+
+/* -------------------------------------------------------------------------- */
 
 watch(selected, async (value) => {
-  model = await getModel(value);
+  textModel = await getModel(value);
   clearUrls();
   get()?.action(replaceAll(getValue(), true));
 });
@@ -274,6 +276,18 @@ watch(
   },
   { immediate },
 );
+
+watch(
+  apiKey,
+  (value) => {
+    model = value
+      ? createMistral({ apiKey: value })("mistral-large-latest")
+      : undefined;
+  },
+  { immediate },
+);
+
+/* -------------------------------------------------------------------------- */
 
 onUnmounted(clearUrls);
 </script>
