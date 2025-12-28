@@ -118,7 +118,9 @@ watch(
   apiKey,
   (value) => {
     transport.updateModel(
-      value ? createMistral({ apiKey: value })("devstral-latest") : undefined,
+      value
+        ? createMistral({ apiKey: value })("mistral-large-latest")
+        : undefined,
     );
   },
   { immediate },
