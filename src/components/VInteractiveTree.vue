@@ -1,5 +1,5 @@
 <template lang="pug">
-q-page-sticky(:offset="[-29, 29]", position="bottom-left")
+q-page-sticky(:offset="[15, 15]", position="bottom-right")
   Transition(
     appear,
     enter-active-class="animated zoomIn",
@@ -23,7 +23,7 @@ q-page-sticky(:offset="[-29, 29]", position="bottom-left")
       q-fab-action(color="secondary", icon="expand_more", @click="clickDown")
       q-fab-action(color="secondary", icon="expand_less", @click="clickUp")
 .scroll.col
-  q-tree.q-ma-xs(
+  q-tree.q-ma-md(
     v-if="nodes[0]",
     ref="qtree",
     v-model:expanded="expanded",
