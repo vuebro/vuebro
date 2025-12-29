@@ -2,6 +2,8 @@ import { defineConfig } from "#q-app/wrappers";
 import { fileURLToPath } from "url";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
+/* -------------------------------------------------------------------------- */
+
 const alias = { "node:path": "path-browserify" },
   appId = "vuebro",
   base = "./",
@@ -35,11 +37,15 @@ const alias = { "node:path": "path-browserify" },
   typescript = { strict, vueShim },
   vueTsc = true;
 
+/* -------------------------------------------------------------------------- */
+
 const extendViteConf = () => ({
   base,
   define,
   plugins: [viteStaticCopy({ targets })],
 });
+
+/* -------------------------------------------------------------------------- */
 
 export default defineConfig(() => ({
   animations: ["zoomIn", "zoomOut"],
