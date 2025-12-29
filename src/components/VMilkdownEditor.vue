@@ -3,8 +3,8 @@ Milkdown
 </template>
 
 <script setup lang="ts">
+import type { Ctx } from "@milkdown/kit/ctx";
 import type { LanguageModel } from "ai";
-import type { EditorState } from "prosemirror-state";
 import type { EditorView } from "prosemirror-view";
 
 import { createMistral } from "@ai-sdk/mistral";
@@ -12,7 +12,6 @@ import { Crepe } from "@milkdown/crepe";
 import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
 import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
 import { parserCtx, serializerCtx } from "@milkdown/kit/core";
-import { Ctx } from "@milkdown/kit/ctx";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { cloneTr } from "@milkdown/kit/prose";
 import { DOMParser, DOMSerializer } from "@milkdown/kit/prose/model";
@@ -71,7 +70,6 @@ const clearUrls = () => {
     });
     urls.clear();
   },
-  decorations = (state: EditorState) => key.getState(state).deco,
   getHint = async ({ get }: Ctx, view: EditorView) => {
     const {
       dispatch,
@@ -192,7 +190,7 @@ ${markdown}`
           new Plugin({
             key,
             props: {
-              decorations,
+              decorations: (state) => key.getState(state).deco,
               handleKeyDown(view, event) {
                 const { dispatch, state } = view,
                   { message } = key.getState(state),
