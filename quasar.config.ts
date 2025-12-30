@@ -11,7 +11,13 @@ const alias = { "node:path": "path-browserify" },
   browser = ["es2022", "firefox115", "chrome115", "safari15"],
   bundler = "builder",
   channels = ["stable"],
-  css = ["app.scss", "~@milkdown/crepe/theme/common/style.css"],
+  css = [
+    "~@fontsource/space-mono",
+    "~@fontsource/noto-sans",
+    "~@fontsource/noto-serif",
+    "app.scss",
+    "~@milkdown/crepe/theme/common/style.css",
+  ],
   dark = "auto",
   define = {
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
@@ -73,7 +79,7 @@ export default defineConfig(() => ({
     bundler,
     preloadScripts,
   },
-  extras: ["material-icons"],
+  extras: ["roboto-font", "material-icons"],
   framework: {
     config: { dark },
     plugins: ["Dialog", "Notify"],
