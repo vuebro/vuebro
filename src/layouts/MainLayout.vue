@@ -10,7 +10,7 @@ q-layout(view="hHh LpR lff")
         round,
         @click="leftDrawer = !leftDrawer"
       )
-      q-toolbar-title
+      q-toolbar-title(:class="{ invisible: bucket && $q.screen.lt.sm }")
         q-avatar(icon="img:favicon.svg", size="xl")
         | VueBro
       q-chip.q-mx-md(
