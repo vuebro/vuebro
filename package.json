@@ -86,6 +86,9 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@fontsource/noto-sans": "^5.2.10",
+    "@fontsource/noto-serif": "^5.2.9",
+    "@fontsource/space-mono": "^5.2.9",
     "@intlify/unplugin-vue-i18n": "^11.0.3",
     "@quasar/extras": "^1.17.0",
     "@quasar/quasar-app-extension-qmarkdown": "^2.0.5",
