@@ -9,8 +9,8 @@ import type { EditorView } from "prosemirror-view";
 
 import { createMistral } from "@ai-sdk/mistral";
 import { Crepe } from "@milkdown/crepe";
+import darkTheme from "@milkdown/crepe/theme/frame-dark.css?inline";
 import lightTheme from "@milkdown/crepe/theme/frame.css?inline";
-import darkTheme from "@milkdown/crepe/theme/nord-dark.css?inline";
 import { parserCtx, serializerCtx } from "@milkdown/kit/core";
 import { htmlAttr, htmlSchema } from "@milkdown/kit/preset/commonmark";
 import { cloneTr } from "@milkdown/kit/prose";
@@ -38,7 +38,7 @@ const $q = useQuasar(),
   dark = "nord",
   deco = DecorationSet.empty,
   key = new PluginKey("MilkdownCopilot"),
-  lang = "vue",
+  lang = "mdc",
   light = "github-light-default",
   mainStore = useMainStore(),
   message = "",
