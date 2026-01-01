@@ -292,8 +292,6 @@ onUnmounted(clearUrls);
 
 <style scoped lang="scss">
 :deep(.milkdown) .ProseMirror {
-  padding-top: 0;
-  padding-bottom: 0;
   @media (max-width: $breakpoint-sm-max) {
     padding-right: 60px;
   }
