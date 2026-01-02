@@ -93,7 +93,7 @@ attrs:
   class:
     - prose
     - max-w-none
-merge: true
+flat: true
 hidden: false
 ---
 `,
