@@ -74,18 +74,18 @@ watch(bucket, async (value) => {
           deleteObject(element).catch(consola.error);
         });
 
-      [...localManifest.add(".vite/manifest.json")]
-        .filter((x) => !serverManifest.has(x))
-        .forEach((element) => {
-          (async () => {
+      await Promise.allSettled(
+        [...localManifest.add(".vite/manifest.json")]
+          .filter((x) => !serverManifest.has(x))
+          .map(async (element) => {
             const body = await (await fetch(`runtime/${element}`)).blob();
-            putObject(
+            return putObject(
               element,
               new Uint8Array(await body.arrayBuffer()),
               body.type,
-            ).catch(consola.error);
-          })().catch(consola.error);
-        });
+            );
+          }),
+      );
 
       putPages().catch(consola.error);
     }
